@@ -270,3 +270,17 @@ Status values: **accepted** (in force), **superseded by D-xxx**, **revisit at <g
 - **Validation:** unit test (a neighbor with f = 0.5 loses to a slightly worse reliable one); conservation test
   for `leap` with `xl: true`.
 - **Status:** accepted; experiment D pending.
+
+## D-015 — A third machine runs Exp B; the reactive control starts before tau_th is frozen
+- **Date / phase:** 2026-11-07 23:40, P2/P3. Decided by the team (Youssef). **Serves:** R8, R9 (schedule).
+- **Context:** both laptops run Exp A until about 06:00–07:00. A third PC is available.
+- **Decision:** the third PC runs all of Exp B from a frozen commit of `feat/leap-next`: first the reactive control
+  R (`exp_b_reactive.yaml`, 33 runs), which does not depend on tau_th; then LEAP-select and LEAP (66 runs) once
+  Exp C has frozen tau_th. The laptops take the B1 runs after Exp A.
+- **Consistency:** Exp B reuses Exp A's Greedy and GRAd runs (same configurations and seeds). Exp A ran at
+  `dd71430`, Exp B at a later commit; the difference is additive (LEAP module, recorder fields for LEAP), and
+  Greedy's behaviour is unchanged by construction (T3/T4: LEAP files are not imported by Greedy; the golden test
+  holds). The commit of every run is in its result file.
+- **Defence:** "All variants of a comparison use the same seeds and configurations; each result records the exact
+  code version, and the shared code paths are covered by the regression tests."
+- **Status:** accepted.
