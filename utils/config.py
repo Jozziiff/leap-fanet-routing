@@ -84,3 +84,12 @@ DIFS_DURATION = SIFS_DURATION + (2 * SLOT_DURATION)
 CW_MIN = 31  # initial contention window size
 ACK_TIMEOUT = ACK_PACKET_LENGTH / BIT_RATE * 1e6 + SIFS_DURATION + 50  # maximum waiting time for ACK, in us
 MAX_RETRANSMISSION_ATTEMPT = 5
+
+# ------------- leap-fanet-routing parameters (see PATCHES.md) ------------- #
+# Defaults reproduce upstream v1.0.1 exactly; the experiment runner overrides them before import.
+ROUTING_PROTOCOL = 'dsdv'  # P2: name in routing/registry.py (upstream hard-codes Dsdv)
+ROUTING_PARAMS = {}  # P2: protocol-specific parameters, read by our own protocols only
+DRONE_SPEED = 10  # P3: mean speed in m/s (upstream hard-codes 10)
+TRAFFIC_RATE = 5  # P4: Poisson rate per drone in packets/s (upstream hard-codes 5)
+TRAFFIC_START = 0  # P4: us, no data packet is generated before this time
+TRAFFIC_END = float('inf')  # P4: us, no data packet is generated after this time

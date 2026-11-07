@@ -1,5 +1,6 @@
 import logging
 from utils import config
+from instrumentation import hooks
 
 # config logging
 logging.basicConfig(filename='running_log.log',
@@ -44,6 +45,8 @@ class Phy:
         # transmit through the channel
         message = [packet, self.env.now, self.my_drone.identifier, 0, packet.channel_id]
 
+        if hooks.REC is not None:
+            hooks.REC.on_tx(packet, self.my_drone, next_hop_id)  # P6
         self.my_drone.simulator.channel.unicast_put(message, next_hop_id)
 
     def broadcast(self, packet):
@@ -61,6 +64,8 @@ class Phy:
         # transmit through the channel
         message = [packet, self.env.now, self.my_drone.identifier, 0, packet.channel_id]
 
+        if hooks.REC is not None:
+            hooks.REC.on_tx(packet, self.my_drone, None)  # P6
         self.my_drone.simulator.channel.broadcast_put(message)
 
     def multicast(self, packet, dst_id_list):

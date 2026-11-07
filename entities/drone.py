@@ -5,7 +5,8 @@ import math
 import queue
 from simulator.log import logger
 from entities.packet import DataPacket
-from routing.dsdv.dsdv import Dsdv
+from routing import registry
+from instrumentation import hooks
 from mac.csma_ca import CsmaCa
 from mobility.gauss_markov_3d import GaussMarkov3D
 from energy.energy_model import EnergyModel
@@ -103,7 +104,7 @@ class Drone:
         self.mac_process_count = 0
         self.enable_blocking = 1  # enable "stop-and-wait" protocol
 
-        self.routing_protocol = Dsdv(self.simulator, self)
+        self.routing_protocol = registry.get(config.ROUTING_PROTOCOL)(self.simulator, self)  # P2 (upstream: Dsdv)
 
         self.mobility_model = GaussMarkov3D(self)
         # self.motion_controller = VfMotionController(self)
@@ -139,8 +140,11 @@ class Drone:
                     interval of data packets follows exponential distribution
                     """
 
-                    rate = 5  # on average, how many packets are generated in 1s
+                    rate = config.TRAFFIC_RATE  # P4 (upstream: 5)
                     yield self.env.timeout(round(self.rng_drone.expovariate(rate) * 1e6))
+
+                if not config.TRAFFIC_START <= self.env.now <= config.TRAFFIC_END:
+                    continue  # P4: outside the traffic window
 
                 config.GL_ID_DATA_PACKET += 1  # data packet id
 
@@ -173,6 +177,8 @@ class Drone:
                 pkd.transmission_mode = 0  # the default transmission mode of data packet is "unicast" (0)
 
                 self.simulator.metrics.datapacket_generated_num += 1
+                if hooks.REC is not None:
+                    hooks.REC.on_generated(pkd, self)  # P6
 
                 logger.info('At time: %s (us) ++++ UAV: %s generates a data packet (id: %s, dst: %s)',
                             self.env.now, self.identifier, pkd.packet_id, destination.identifier)
@@ -183,7 +189,8 @@ class Drone:
                     self.transmitting_queue.put(pkd)
                 else:
                     # the drone has no more room for new packets
-                    pass
+                    if hooks.REC is not None:
+                        hooks.REC.on_source_overflow(pkd, self)  # P6
             else:  # cannot generate packets if "my_drone" is in sleep state
                 break
 
@@ -236,6 +243,8 @@ class Drone:
                                     # it should be noted that "final_packet" may be the data packet itself or a control
                                     # packet, depending on whether the routing protocol can find an appropriate next hop
                                     has_route, final_packet, enquire = self.routing_protocol.next_hop_selection(packet)
+                                    if hooks.REC is not None:
+                                        hooks.REC.on_decision(packet, self, has_route, enquire)  # P6
 
                                     if has_route:
                                         logger.info('At time: %s (us) ---- UAV: %s obtain the next hop: %s of data'
@@ -251,11 +260,15 @@ class Drone:
                                         if enquire:
                                             # in this case, the "final_packet" is actually the control packet
                                             yield self.env.process(self.packet_coming(final_packet))
+                                elif hooks.REC is not None:
+                                    hooks.REC.on_retry_budget(packet, self)  # P6
 
                             else:  # control packet but not ack
                                 yield self.env.process(self.packet_coming(packet))
                         else:
-                            pass  # means dropping this data packet for expiration
+                            # means dropping this data packet for expiration
+                            if hooks.REC is not None:
+                                hooks.REC.on_expired(packet, self)  # P6
             else:  # this drone runs out of energy
                 break  # it is important to break the while loop
 
@@ -360,6 +373,8 @@ class Drone:
                     transmitting_node_list = [list(x) for x in {tuple(i) for i in transmitting_node_list}]
 
                     sinr_list = sinr_calculator(self, all_drones_send_to_me, transmitting_node_list)
+                    if hooks.REC is not None:
+                        hooks.REC.on_receptions(self, all_drones_send_to_me, potential_packet, sinr_list)  # P6
 
                     # receive the packet of the transmitting node corresponding to the maximum SINR
                     max_sinr = max(sinr_list)
@@ -378,6 +393,8 @@ class Drone:
                         else:
                             logger.info('At time: %s (us) ---- Packet %s is dropped due to exceeding max TTL',
                                         self.env.now, pkd.packet_id)
+                            if hooks.REC is not None:
+                                hooks.REC.on_ttl_drop(pkd, self, all_drones_send_to_me[which_one][0])  # P6
                     else:  # sinr is lower than threshold
                         pass
 

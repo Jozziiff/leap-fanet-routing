@@ -4,6 +4,7 @@ from simulator.log import logger
 from phy.phy import Phy
 from utils import config
 from utils.util_function import check_channel_availability
+from instrumentation import hooks
 
 
 class CsmaCa:
@@ -164,6 +165,8 @@ class CsmaCa:
 
         try:
             yield self.env.timeout(config.ACK_TIMEOUT)
+            if hooks.REC is not None:
+                hooks.REC.on_ack_timeout(pkd, self.my_drone)  # P6
             self.my_drone.routing_protocol.penalize(pkd)
 
             logger.info('At time: %s (us) ---- ACK timeout of packet: %s',
@@ -180,6 +183,8 @@ class CsmaCa:
 
                 logger.info('At time: %s (us) ---- Packet: %s is dropped!',
                             self.env.now, pkd.packet_id)
+                if hooks.REC is not None:
+                    hooks.REC.on_retry_drop(pkd, self.my_drone)  # P6
 
         except simpy.Interrupt:
             # receive ACK in time

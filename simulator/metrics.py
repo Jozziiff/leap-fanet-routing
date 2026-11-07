@@ -1,6 +1,7 @@
 import numpy as np
 from collections import defaultdict
 from openpyxl import load_workbook
+from instrumentation import hooks
 
 
 class Metrics:
@@ -61,6 +62,8 @@ class Metrics:
         self.throughput_dict[received_packet.packet_id] = received_packet.packet_length / (latency / 1e6)
         self.hop_cnt_dict[received_packet.packet_id] = received_packet.get_current_ttl()
         self.datapacket_arrived.add(received_packet.packet_id)
+        if hooks.REC is not None:
+            hooks.REC.on_delivered(received_packet)  # P6
 
     def print_metrics(self):
         # calculate the average end-to-end delay
