@@ -284,3 +284,18 @@ Status values: **accepted** (in force), **superseded by D-xxx**, **revisit at <g
 - **Defence:** "All variants of a comparison use the same seeds and configurations; each result records the exact
   code version, and the shared code paths are covered by the regression tests."
 - **Status:** accepted.
+
+## D-016 — Pre-registered rule for freezing tau_th, applied automatically
+- **Date / phase:** 2026-11-08 00:55, P2, written and committed while Exp C had finished only Greedy and
+  tau_th = 0.25 s (no result yet for 0.5, 1, 2 or 4 s). **Serves:** R6 (configurable threshold), rigour.
+- **Rule:** on Exp C (N = 30, 20 m/s, λ = 1, tuning seeds 100–102, never used for testing), compute each tau_th's
+  mean PDR; among the thresholds within 0.5 percentage points of the best mean, choose the **smallest**. The
+  smallest threshold is closest to Greedy (fewest proactive switches, least path deviation), so it wins ties.
+  0.5 pp is below the seed-to-seed PDR spread seen so far (about 1.4 pp for both Greedy and LEAP at 0.25 s).
+- **Automation:** `experiments/freeze_tau.py` applies the rule only if all 15 LEAP tuning runs exist, writes
+  `experiments/configs/exp_b_leap.yaml` and `docs/tau_freeze.json` (per-threshold PDRs), and a watcher commits and
+  pushes them; the third PC launches Exp B part 2 from that commit. This lets Exp B start overnight without
+  anyone choosing the threshold by hand after seeing the data.
+- **Defence:** "The threshold was chosen on separate tuning seeds by a rule committed before the sweep finished;
+  the test seeds never influenced it."
+- **Status:** accepted.
