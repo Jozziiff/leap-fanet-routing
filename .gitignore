@@ -8,3 +8,11 @@ __pycache__
 *.log
 *.gif
 .vscode/
+# --- leap-fanet-routing additions (not upstream, see PATCHES.md) ---
+.venv/
+.ruff_cache/
+.pytest_cache/
+# internal notes (DECISIONS.md D-008)
+notes/
+# raw experiment outputs (aggregated results and Phase-0 evidence are committed)
+results/raw/
