@@ -20,6 +20,10 @@ Parameters (``config.ROUTING_PARAMS``, all optional):
     Range used for the prediction, as a fraction of ``R_max`` (interference margin).
 ``extra_hello_bits`` (default 128)
     Hello size increase for velocity and timestamp (3 x 32 + 32 bits).
+``xl`` (default ``False``), ``xl_beta`` (default 0.2)
+    Bonus B1, cross-layer: each node keeps, per neighbor, an exponential moving average ``f`` of ACK
+    timeouts (``f <- (1 - beta) f + beta * [timeout]``; success = ACK received) and ranks candidates,
+    Greedy's pick included, by ``progress * (1 - f)`` instead of progress. The MAC is only read.
 ``warn_tau_s`` (default ``tau_th_s``)
     Threshold for logging prediction warnings; with ``tau_th_s = 0`` and ``warn_tau_s > 0`` the protocol
     behaves as Greedy and only logs (shadow mode, for prediction-quality measurements).
@@ -27,6 +31,7 @@ Parameters (``config.ROUTING_PARAMS``, all optional):
 
 from __future__ import annotations
 
+from entities.packet import AckPacket
 from instrumentation import hooks
 from phy.large_scale_fading import maximum_communication_range
 from routing.greedy.greedy import Greedy
@@ -54,6 +59,9 @@ class Leap(Greedy):
         self.kappa = float(params["kappa"])
         self.extra_hello_bits = int(params["extra_hello_bits"])
         self.warn_tau_s = float(params.get("warn_tau_s", self.tau_th_s))
+        self.xl = bool(params.get("xl", False))
+        self.xl_beta = float(params.get("xl_beta", 0.2))
+        self.retx_rate: dict[int, float] = {}  # neighbor id -> moving average of ACK timeouts (B1)
         self.range_m = self.kappa * maximum_communication_range()
         # replaced before the simulation starts, so Greedy's processes only ever see this table
         self.neighbor_table = LeapNeighborTable(self.simulator.env, my_drone)
@@ -106,15 +114,22 @@ class Leap(Greedy):
             self.neighbor_table.table[j][0], dst_drone.coords
         )
 
+    def score(self, j: int, dst_drone) -> float:
+        """Ranking score: progress (m), weighted by ``1 - f_j`` when the cross-layer bonus is on."""
+        progress = self.progress_m(j, dst_drone)
+        if self.xl and progress > 0:
+            return progress * (1.0 - self.retx_rate.get(j, 0.0))
+        return progress
+
     def best_alternative(self, dst_drone, exclude: set[int], require_safe: bool) -> int | None:
-        """Neighbor with the most positive progress, not in ``exclude``; if ``require_safe``, only among
+        """Neighbor with the best positive score, not in ``exclude``; if ``require_safe``, only among
         neighbors predicted to stay in range for at least ``tau_th_s``. Ties: first in table order (as Greedy).
         """
         best_id, best_progress = None, 0.0
         for j in self.neighbor_table.table:
             if j in exclude or not self._is_valid(j):
                 continue
-            progress = self.progress_m(j, dst_drone)
+            progress = self.score(j, dst_drone)
             if progress <= best_progress:
                 continue
             if require_safe and self.link_lifetime_s(j) < self.tau_th_s:
@@ -129,6 +144,10 @@ class Leap(Greedy):
     # --------------------------------------------------------------- routing
     def next_hop_selection(self, packet):
         has_route, packet, enquire = super().next_hop_selection(packet)  # purge + Greedy's choice
+        if has_route and self.xl:
+            weighted_id = self.best_alternative(packet.dst_drone, set(), require_safe=False)
+            if weighted_id is not None:
+                packet.next_hop_id = weighted_id
         if not has_route or (self.tau_th_s <= 0 and self.warn_tau_s <= 0):
             return has_route, packet, enquire
 
@@ -152,8 +171,19 @@ class Leap(Greedy):
             self._log("PROACTIVE_SWITCH", packet, backup_id, tau_s)
         return has_route, packet, enquire
 
+    def packet_reception(self, packet, src_drone_id):
+        if self.xl and isinstance(packet, AckPacket):
+            self._update_retx_rate(src_drone_id, failed=False)
+        yield from super().packet_reception(packet, src_drone_id)
+
+    def _update_retx_rate(self, j: int, failed: bool) -> None:
+        f = self.retx_rate.get(j, 0.0)
+        self.retx_rate[j] = (1.0 - self.xl_beta) * f + self.xl_beta * (1.0 if failed else 0.0)
+
     def penalize(self, packet):
         """Called by the MAC on every ACK timeout, before it retries ``packet.next_hop_id``."""
+        if self.xl:
+            self._update_retx_rate(packet.next_hop_id, failed=True)
         if self.repair == "off":
             return
         next_hop_id = packet.next_hop_id

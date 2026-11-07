@@ -240,3 +240,33 @@ Status values: **accepted** (in force), **superseded by D-xxx**, **revisit at <g
 - **Defence:** "LEAP is Greedy's code plus one check; with the check switched off it reproduces Greedy exactly,
   and the reactive control uses the same hellos, so the ablation isolates the prediction."
 - **Status:** accepted.
+
+## D-013 — Experiments run from a working tree frozen at a commit
+- **Date / phase:** 2026-11-07, P2. **Serves:** reproducibility (code criterion, rigour).
+- **Context:** `sweep.py` starts a fresh process per run, which imports the code from disk at that moment. Twice
+  tonight, code was edited in the tree an experiment was running from (recorder during Exp A, `leap.py` during
+  Exp C). Both times no run had started since the edit (checked in the sweep logs), so no result mixes code
+  versions, but later runs would have.
+- **Decision:** every experiment runs from a dedicated git worktree at a fixed commit; development happens in
+  another worktree. Exp A: `main` at `dd71430`; Exp C: `feat/leap` at `694c7ef`. Each result JSON records the
+  commit and a `dirty` flag, and the aggregation keeps both columns, so a mixed-version experiment would be
+  visible.
+- **Defence:** "Each result file names the exact commit that produced it, and no experiment ran on uncommitted
+  code."
+- **Status:** accepted.
+
+## D-014 — Bonus B1: cross-layer weighting by the recent MAC retransmission rate
+- **Date / phase:** 2026-11-07, implemented ahead of P4 so its runs can start as soon as compute is free
+  (evaluated only after the core results, D-010). **Serves:** X1 (PDF p. 15: "pondérer le choix du prochain saut
+  par un indicateur issu de la couche MAC, taux de retransmission récent vers un voisin").
+- **Decision:** per neighbor *j*, `f_j <- 0.8 f_j + 0.2 [ACK timeout]`, updated on every ACK timeout (via
+  `penalize()`, failure) and every ACK received from *j* (success); `f_j = 0` for unknown neighbors. Candidates,
+  Greedy's own pick included, are ranked by `progress_j (1 - f_j)`; LEAP's lifetime rule is then applied
+  unchanged. Parameter `xl: true` on the LEAP class; the MAC is only read.
+- **Why these choices:** β = 0.2 averages over roughly the last 5 attempts, short enough to follow mobility;
+  weighting Greedy's pick too lets the bonus act when the lifetime check sees no risk (e.g. congestion, H3).
+- **Known limit (for the article):** an ACK timeout can come from a broken link or from contention at the
+  receiver; `f_j` cannot tell them apart (SPEC Q&A 15).
+- **Validation:** unit test (a neighbor with f = 0.5 loses to a slightly worse reliable one); conservation test
+  for `leap` with `xl: true`.
+- **Status:** accepted; experiment D pending.

@@ -31,10 +31,14 @@ def run(tmp_path: Path, name: str, *args: str, events: bool = False) -> dict:
 SHORT = ("--n", "8", "--sim-time-s", "5", "--traffic-start-s", "0.5", "--traffic-end-s", "4", "--rate", "2")
 
 
-@pytest.mark.parametrize("protocol", ["dsdv", "greedy", "grad", "opar", "q_routing", "qgeo", "qfanet", "leap"])
+@pytest.mark.parametrize(
+    "protocol", ["dsdv", "greedy", "grad", "opar", "q_routing", "qgeo", "qfanet", "leap", "leap_xl"]
+)
 def test_every_protocol_runs_and_conserves_packets(tmp_path, protocol):
     """T2 + T6: each registered protocol runs; generated = delivered + losses + in flight."""
-    m = run(tmp_path, protocol, "--protocol", protocol, *SHORT)["metrics"]
+    params = '{"xl": true}' if protocol == "leap_xl" else "{}"
+    protocol = "leap" if protocol == "leap_xl" else protocol
+    m = run(tmp_path, protocol, "--protocol", protocol, "--params", params, *SHORT)["metrics"]
     assert m["generated"] > 0
     assert m["generated"] == m["delivered"] + m["lost"] + m["in_flight"]
     assert m["losses"]["OTHER"] <= 0.02 * m["generated"]

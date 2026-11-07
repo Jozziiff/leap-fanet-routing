@@ -99,7 +99,8 @@ class FakeLeap:
             self.neighbor_table.table[j] = [list(pos), list(vel), env.now, env.now]
         self.tau_th_s = tau_th_s
         self.range_m = 0.9 * maximum_communication_range()
-        for name in ("_is_valid", "link_lifetime_s", "progress_m", "best_alternative"):
+        self.xl, self.retx_rate = False, {}
+        for name in ("_is_valid", "link_lifetime_s", "progress_m", "score", "best_alternative"):
             setattr(self, name, getattr(Leap, name).__get__(self))
 
 
@@ -202,3 +203,11 @@ def test_shadow_mode_logs_warnings_but_changes_nothing(tmp_path):
     assert shadow["upstream_metrics"] == greedy["upstream_metrics"]
     assert shadow["metrics"]["leap_events"].get("WARNING", 0) > 0
     assert "PROACTIVE_SWITCH" not in shadow["metrics"]["leap_events"]
+
+
+def test_cross_layer_weighting_prefers_reliable_neighbor():
+    """B1: a neighbor with a high recent ACK-timeout rate loses to a slightly worse but reliable one."""
+    leap = FakeLeap(1.0, {1: ((150, 0, 50), (0, 0, 0)), 2: ((130, 0, 50), (0, 0, 0))})
+    assert leap.best_alternative(DST, set(), require_safe=False) == 1
+    leap.xl, leap.retx_rate = True, {1: 0.5}
+    assert leap.best_alternative(DST, set(), require_safe=False) == 2
