@@ -532,7 +532,7 @@ No open questions remain. Anything new goes here with the date.
 
 ### 18.5 Decisions at repo creation (ask the team then)
 - Repo name (**chosen: `leap-fanet-routing`**) and owner account (Youssef's or Rayen's, both as collaborators).
-- Internal files (assistant configuration, earlier draft specs, scratch notes): **kept out of git** via `.gitignore` (decided 2026-11-07, D-008).
+- Internal files: personal scratch notes and earlier draft specs stay out of git; the shared working rules (`CLAUDE.md`) are tracked (D-008).
 - Commit attribution: commits are authored by the team member who makes them; no co-author trailers (decided 2026-11-07, D-008).
 
 ## 19. Drift-control protocol (how we stay on track)
