@@ -101,3 +101,25 @@ Recorder attached, `run_one.py`, N = 10, speed 10, λ = 5, seed 2025, traffic wi
 ### Tests
 `pytest`: 26 passed (T2 interface, T5 paired traffic, T6 conservation for 7 protocols, T7 classifier, T8 hop
 count), 2 slow golden tests run separately (above).
+
+---
+
+## 2026-11-08 00:45 — Exp C first runs (tuning seeds; tau_th selection, not yet the main comparison)
+Source: `leap-dev/results/raw/exp_c_tuning/` (commit `694c7ef`), N = 30, 20 m/s, λ = 1, seeds 100–102.
+
+| Variant | PDR (s100 / s101 / s102) | Link-break losses | Collision / no-route losses | Proactive switches |
+|---|---|---|---|---|
+| Greedy | 0.817 / 0.801 / 0.793 | 136 / 147 / 151 | 0 / 0 | – |
+| LEAP, tau_th = 0.25 s | 0.991 / 0.986 / 0.977 | 0 / 1 / 3 | 0 / 0 | 493 / 513 / 520 |
+
+Sanity checks on seed 100 (event logs): both runs generate the same 742 packets (paired traffic, M22). Greedy
+makes 680 transmission attempts to a receiver already out of range (`FAIL_RANGE`); LEAP makes 0.
+**Mechanism:** 486 of LEAP's 493 switches (98.6 %) happen with a predicted lifetime of exactly 0, i.e. the
+neighbor Greedy picked is, by dead reckoning from its last hello, already out of range. Greedy keeps a neighbor
+for 2 s after its last hello (M10) and picks the one closest to the destination (M11), which at 20 m/s is often a
+neighbor that has already left; the MAC then spends its 5 retries on it (M12). At small tau_th, LEAP's gain is
+mostly this "stale neighbor" filtering. Whether a larger tau_th adds a gain on top (true anticipation) is what the
+rest of the sweep (0.5–4 s) and the shadow runs will show. **For the article and Q&A:** say this explicitly; it is
+the main "why". A natural reviewer question is whether simply shortening Greedy's 2-s neighbor lifetime would do
+the same; answer from data (tau_th sweep), and list "Greedy with a shorter neighbor timeout" as a further control
+if time allows.
