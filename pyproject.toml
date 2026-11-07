@@ -1,0 +1,45 @@
+[project]
+name = "leap-fanet-routing"
+version = "0.1.0"
+description = "Link-expiration-aware predictive geographic routing for UAV swarms, on UavNetSim-v1"
+readme = "README.md"
+requires-python = "==3.12.*"
+license = "MIT"
+authors = [
+    { name = "Youssef Hamdani" },
+    { name = "Rayen Hamza" },
+]
+# Same pins as upstream requirements.txt (UavNetSim-v1 v1.0.1); uv.lock pins the transitive set.
+dependencies = [
+    "matplotlib==3.10.1",
+    "numpy==2.2.4",
+    "openpyxl==3.1.5",
+    "Pillow==11.2.1",
+    "scikit-opt==0.6.6",
+    "simpy==4.1.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+    "pyyaml",
+    "pandas",
+    "scipy",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+# Upstream code is never reformatted (SPEC §18.2): lint only our directories.
+include = [
+    "experiments/**/*.py",
+    "analysis/**/*.py",
+    "instrumentation/**/*.py",
+    "routing/leap/**/*.py",
+    "routing/registry.py",
+    "tests/**/*.py",
+]
