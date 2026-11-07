@@ -43,3 +43,9 @@ include = [
     "routing/registry.py",
     "tests/**/*.py",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["slow: long simulations (golden regression), run with -m slow"]
+addopts = "-m 'not slow'"
