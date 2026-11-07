@@ -1,0 +1,6 @@
+bench/n10_l1 --n 10 --routing greedy --speed 10 --rate 1 --energy off
+bench/n10_l5 --n 10 --routing greedy --speed 10 --rate 5 --energy off
+bench/n30_l1 --n 30 --routing greedy --speed 10 --rate 1 --energy off
+bench/n30_l5 --n 30 --routing greedy --speed 10 --rate 5 --energy off
+bench/n50_l1 --n 50 --routing greedy --speed 10 --rate 1 --energy off
+bench/n50_l5 --n 50 --routing greedy --speed 10 --rate 5 --energy off

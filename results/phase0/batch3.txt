@@ -1,0 +1,2 @@
+golden/dsdv_default_warning --n 10 --routing dsdv --log-level WARNING
+golden/dsdv_default_info --n 10 --routing dsdv --log-level INFO

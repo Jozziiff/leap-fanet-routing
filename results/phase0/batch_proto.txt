@@ -1,0 +1,7 @@
+proto/greedy --n 30 --sim-time-s 3 --routing greedy --speed 10 --rate 1 --energy off
+proto/dsdv --n 30 --sim-time-s 3 --routing dsdv --speed 10 --rate 1 --energy off
+proto/grad --n 30 --sim-time-s 3 --routing grad --speed 10 --rate 1 --energy off
+proto/opar --n 30 --sim-time-s 3 --routing opar --speed 10 --rate 1 --energy off
+proto/q_routing --n 30 --sim-time-s 3 --routing q_routing --speed 10 --rate 1 --energy off
+proto/qgeo --n 30 --sim-time-s 3 --routing qgeo --speed 10 --rate 1 --energy off
+proto/qfanet --n 30 --sim-time-s 3 --routing qfanet --speed 10 --rate 1 --energy off

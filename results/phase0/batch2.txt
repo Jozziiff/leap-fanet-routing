@@ -1,0 +1,7 @@
+m26/v5 --n 10 --routing greedy --speed 5 --rate 1 --energy on --trace
+m26/v10 --n 10 --routing greedy --speed 10 --rate 1 --energy on --trace
+m26/v20 --n 10 --routing greedy --speed 20 --rate 1 --energy on --trace
+m22/greedy --n 10 --routing greedy --speed 10 --rate 1 --energy off --trace
+m22/dsdv --n 10 --routing dsdv --speed 10 --rate 1 --energy off --trace
+m22/grad --n 10 --routing grad --speed 10 --rate 1 --energy off --trace
+m20/n30_l5 --n 30 --routing greedy --speed 10 --rate 5 --energy off --trace
