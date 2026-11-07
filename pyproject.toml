@@ -26,6 +26,7 @@ dev = [
     "pyyaml",
     "pandas",
     "scipy",
+    "imageio-ffmpeg>=0.8.1",
 ]
 
 [tool.uv]
