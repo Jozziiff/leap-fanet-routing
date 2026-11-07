@@ -212,3 +212,31 @@ Status values: **accepted** (in force), **superseded by D-xxx**, **revisit at <g
 - **Defence:** "A loss is a link break when the receiver could not have decoded the frame even without any
   interference, computed with the simulator's own path-loss formula, so the split is exact on this platform."
 - **Status:** accepted.
+
+## D-012 — LEAP-GR implementation details
+- **Date / phase:** 2026-11-07, P2. **Serves:** R5, R6, R7, R9.
+- **Decisions (beyond SPEC §6):**
+  1. **One class for all variants.** `Leap(Greedy)` with parameters: A1 LEAP-select = `repair: off`;
+     A2 LEAP = `repair: predictive`; control R (Greedy-reactive) = `tau_th_s: 0, repair: reactive`. R therefore
+     uses LEAP's hello (same size, +128 bits), so A2 − R differs *only* by prediction.
+  2. **Never switch away from the destination** when it is Greedy's pick and its predicted lifetime is > 0
+     (logged `KEEP_DESTINATION`): a direct delivery takes one transmission, a detour takes at least two.
+  3. **Neighbor validity is checked without purging** (`_is_valid`: last hello younger than Greedy's 2-s entry
+     lifetime). `penalize()` must not mutate the table, otherwise Greedy's own waiting-list check, which runs
+     without purging (`greedy.py:234`), would see a different table than in Greedy.
+  4. **Hello velocity is copied** (M39) and the neighbor position is dead-reckoned from the hello's creation
+     time, the moment its position was sampled (M9).
+  5. **Shadow mode** (`tau_th_s: 0`, `warn_tau_s > 0`, no extra hello bits) behaves exactly as Greedy (T3) and only
+     logs warnings, so prediction quality (SPEC §8.4) is measured on Greedy's real link breaks, not on breaks
+     LEAP has already avoided. One open warning per link at a time, so bursts of packets on one link do not
+     inflate the counts.
+  6. **Recomputations for LEAP:** a proactive switch is part of the packet's first decision and is reported in
+     `leap_events`, not as a recomputation; a predictive repair changes the next hop after an ACK timeout and
+     is a recomputation (`RETRY_SWITCH`), as for any protocol (D-011).
+- **Validation:** T1 (12 cases: static, separating, head-on, perpendicular, vertical, out of range, boundary,
+  near-zero speed, equality with OPAR's predictor on 3 in-range cases, R_max); decision-rule unit tests
+  (safe backup, no safe backup, expired neighbor, dead reckoning); T3: LEAP with prediction off and Greedy give
+  bit-identical metrics; shadow mode identical to Greedy with warnings logged; T6 conservation for LEAP.
+- **Defence:** "LEAP is Greedy's code plus one check; with the check switched off it reproduces Greedy exactly,
+  and the reactive control uses the same hellos, so the ablation isolates the prediction."
+- **Status:** accepted.

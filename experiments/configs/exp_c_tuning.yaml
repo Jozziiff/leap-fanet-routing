@@ -1,0 +1,18 @@
+# Experiment C: tau_th tuning for LEAP (SPEC §8.3, §8.4; R6). Separate tuning seeds 100-102, high-speed point.
+# LEAP at 5 thresholds x 3 seeds + Greedy reference x 3 seeds + shadow (Greedy behaviour, warnings only) x 1 seed.
+name: exp_c_tuning
+seeds: [100, 101, 102]
+fixed:
+  sim_time_s: 30
+  traffic_start_s: 2
+  traffic_end_s: 27
+  energy: "off"
+configs:
+  - {n: 30, speed: 20, rate: 1}
+variants:
+  - greedy
+  - {label: leap_tau0.25, protocol: leap, params: {tau_th_s: 0.25, repair: predictive}}
+  - {label: leap_tau0.5, protocol: leap, params: {tau_th_s: 0.5, repair: predictive}}
+  - {label: leap_tau1, protocol: leap, params: {tau_th_s: 1.0, repair: predictive}}
+  - {label: leap_tau2, protocol: leap, params: {tau_th_s: 2.0, repair: predictive}}
+  - {label: leap_tau4, protocol: leap, params: {tau_th_s: 4.0, repair: predictive}}

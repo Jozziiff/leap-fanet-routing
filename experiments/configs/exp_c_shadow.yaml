@@ -1,0 +1,18 @@
+# Prediction quality (SPEC §8.4): LEAP in shadow mode behaves exactly as Greedy (tau_th = 0, no repair,
+# no extra hello bits; test T3) and only logs warnings, so precision / recall / lead time are measured on
+# Greedy's real link breaks. One tuning seed per warning threshold.
+name: exp_c_shadow
+seeds: [100]
+fixed:
+  sim_time_s: 30
+  traffic_start_s: 2
+  traffic_end_s: 27
+  energy: "off"
+configs:
+  - {n: 30, speed: 20, rate: 1}
+variants:
+  - {label: shadow_w0.25, protocol: leap, params: {tau_th_s: 0, repair: "off", extra_hello_bits: 0, warn_tau_s: 0.25}}
+  - {label: shadow_w0.5, protocol: leap, params: {tau_th_s: 0, repair: "off", extra_hello_bits: 0, warn_tau_s: 0.5}}
+  - {label: shadow_w1, protocol: leap, params: {tau_th_s: 0, repair: "off", extra_hello_bits: 0, warn_tau_s: 1.0}}
+  - {label: shadow_w2, protocol: leap, params: {tau_th_s: 0, repair: "off", extra_hello_bits: 0, warn_tau_s: 2.0}}
+  - {label: shadow_w4, protocol: leap, params: {tau_th_s: 0, repair: "off", extra_hello_bits: 0, warn_tau_s: 4.0}}

@@ -18,6 +18,7 @@ PROTOCOLS: dict[str, tuple[str, str]] = {
     "qgeo": ("routing.qgeo.qgeo", "QGeo"),
     "qfanet": ("routing.qfanet.qfanet", "QFanet"),
     "qmr": ("routing.qmr.qmr", "QMR"),
+    "leap": ("routing.leap.leap", "Leap"),
 }
 
 

@@ -102,10 +102,20 @@ class Recorder:
         self.control_tx_frames = 0
         self.control_tx_bits = 0
 
+        # LEAP events and prediction quality (SPEC §8.4)
+        self.leap_events: Counter[str] = Counter()
+        self.pending_warnings: dict[tuple[int, int], tuple[float, float]] = {}  # (i, j) -> (t_us, window_us)
+        self.last_warning_us: dict[tuple[int, int], tuple[float, float]] = {}
+        self.warn_tp = 0
+        self.warn_fp = 0
+        self.lead_times_s: list[float] = []
+        self.breaks_on_used_links = 0
+        self.breaks_warned = 0
+
     # ------------------------------------------------------------------ setup
     def attach(self, simulator: Any) -> None:
         """Bind to a simulator (called right after it is constructed)."""
-        from phy.large_scale_fading import general_path_loss
+        from phy.large_scale_fading import general_path_loss, maximum_communication_range
         from utils import config
 
         self.sim = simulator
@@ -113,6 +123,7 @@ class Recorder:
         self._p_tx_w = config.TRANSMITTING_POWER
         self._noise_w = config.NOISE_POWER
         self._thr_db = config.SNR_THRESHOLD
+        self._r_max_m = maximum_communication_range()
 
     # ------------------------------------------------------------- utilities
     @property
@@ -227,6 +238,8 @@ class Recorder:
         from entities.packet import AckPacket
 
         me = receiver.identifier
+        if self.pending_warnings:
+            self._resolve_warnings()
         max_sinr = max(sinr_list)
         winner = sinr_list.index(max_sinr) if max_sinr >= self._thr_db else None
         for k, (packet, pair) in enumerate(zip(packets, senders)):
@@ -245,6 +258,8 @@ class Recorder:
             if self._is_data(packet):
                 self.frames["data"][outcome] += 1
                 pid = packet.packet_id
+                if outcome == FAIL_RANGE:
+                    self._count_break(sid, me)
                 state = self.last_attempt.get((pid, sid))
                 if state is not None and state["nh"] == me:
                     state["data"] = outcome
@@ -302,6 +317,44 @@ class Recorder:
         self.delivered[pid] = (self._now, self._now - pkd.creation_time, hops)
         self._set_last(pid, "DELIVERED")
         self._ev("DELIVERED", pid, pkd.dst_drone.identifier, hops)
+
+    def on_leap(
+        self, kind: str, node: Any, packet: Any, j: int | None, tau_s: float | None, warn_tau_s: float
+    ) -> None:
+        """LEAP decision events; ``WARNING`` = Greedy's pick predicted to break within ``warn_tau_s``."""
+        self.leap_events[kind] += 1
+        i = node.identifier
+        self._ev(
+            kind,
+            getattr(packet, "packet_id", None),
+            i,
+            (j, tau_s if tau_s is None or math.isfinite(tau_s) else 1e9),
+        )
+        if kind == "WARNING" and j is not None:
+            window_us = warn_tau_s * 1e6
+            self.last_warning_us[(i, j)] = (self._now, window_us)
+            if (i, j) not in self.pending_warnings:  # one open warning per link at a time
+                self.pending_warnings[(i, j)] = (self._now, window_us)
+
+    def _resolve_warnings(self) -> None:
+        """A warning is a true positive if the real distance exceeds R_max within its window."""
+        now = self._now
+        for (i, j), (t0, window_us) in list(self.pending_warnings.items()):
+            d = math.dist(self.sim.drones[i].coords, self.sim.drones[j].coords)
+            if d > self._r_max_m:
+                self.warn_tp += 1
+                self.lead_times_s.append((now - t0) / 1e6)
+                del self.pending_warnings[(i, j)]
+            elif now - t0 > window_us:
+                self.warn_fp += 1
+                del self.pending_warnings[(i, j)]
+
+    def _count_break(self, sender: int, receiver: int) -> None:
+        """A data frame failed because the link was broken: was the link warned within its window?"""
+        self.breaks_on_used_links += 1
+        last = self.last_warning_us.get((sender, receiver))
+        if last is not None and self._now - last[0] <= last[1]:
+            self.breaks_warned += 1
 
     # ---------------------------------------------------------- attribution
     @staticmethod
@@ -393,6 +446,27 @@ class Recorder:
             "control_tx_frames": self.control_tx_frames,
             "control_tx_bits": self.control_tx_bits,
             "collision_num_upstream": m.collision_num,
+            "leap_events": dict(self.leap_events),
+            "prediction": {
+                "warnings_true_positive": self.warn_tp,
+                "warnings_false_positive": self.warn_fp,
+                "warnings_open_at_end": len(self.pending_warnings),
+                "precision": self.warn_tp / (self.warn_tp + self.warn_fp)
+                if (self.warn_tp + self.warn_fp)
+                else None,
+                "lead_time_mean_s": sum(self.lead_times_s) / len(self.lead_times_s)
+                if self.lead_times_s
+                else None,
+                "lead_time_median_s": sorted(self.lead_times_s)[len(self.lead_times_s) // 2]
+                if self.lead_times_s
+                else None,
+                "lead_times_s": [round(x, 4) for x in self.lead_times_s],
+                "breaks_on_used_links": self.breaks_on_used_links,
+                "breaks_warned": self.breaks_warned,
+                "recall": self.breaks_warned / self.breaks_on_used_links
+                if self.breaks_on_used_links
+                else None,
+            },
             "upstream_metrics": {
                 "generated": m.datapacket_generated_num,
                 "delivered": len(m.datapacket_arrived),
