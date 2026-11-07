@@ -1,0 +1,15 @@
+# Experiment A: diagnostic of the existing protocols (SPEC §5, §8.1; R2, R3, R4).
+# 7 protocols x 11 configurations x 3 seeds = 231 runs (DECISIONS D-009).
+name: exp_a_diagnostic
+seeds: [1, 2, 3]
+fixed:
+  sim_time_s: 30
+  traffic_start_s: 2
+  traffic_end_s: 27
+  energy: "off"
+reference: {n: 30, speed: 10, rate: 1}
+sweeps:
+  n: [10, 20, 30, 40, 50]
+  speed: [5, 10, 15, 20]
+  rate: [0.5, 1, 2, 5]
+variants: [dsdv, greedy, grad, opar, q_routing, qgeo, qfanet]
