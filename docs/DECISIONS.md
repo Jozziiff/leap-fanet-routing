@@ -89,7 +89,7 @@ Status values: **accepted** (in force), **superseded by D-xxx**, **revisit at <g
 - **Defence:** "We measured run time before choosing seeds. The main claim has 5 paired seeds; its CI is half as
   wide as with 3, and we use paired t-tests because traffic and trajectories are identical across protocols for
   a given seed (M22)."
-- **Status:** accepted. Revisit after the first Exp-A night if its wall time is > 20 % above the estimate.
+- **Status:** superseded by D-009 for the defense version (3 seeds everywhere); restored after the defense.
 
 ## D-005 — λ = 1 pkt/s per drone stays the reference load
 - **Date / phase:** 2026-11-07, G0. **Serves:** R4, H1/H3.
@@ -144,4 +144,33 @@ Status values: **accepted** (in force), **superseded by D-xxx**, **revisit at <g
   (large, regenerable).
 - **Defence:** "The first commit is the exact upstream release, every change to it is in PATCHES.md, and the
   environment is locked, so anyone can re-run our numbers."
+- **Status:** accepted.
+
+## D-009 — Defense version: 3 seeds everywhere; 5 seeds for Exp B after the defense
+- **Date / phase:** 2026-11-07, before P1. Decided by the team (Youssef). **Serves:** R4, R8, R9.
+- **Context:** the defense is on Mon 2026-11-09 at 09:00. The tiered plan (D-004) needs ≈ 165 worker-h, i.e.
+  ≈ 13.8 h of wall time on our two laptops (6 workers each), and the runs can only start once the Phase-1
+  instrumentation and LEAP are implemented and tested. The compute our two laptops can deliver before the
+  defense does not cover it.
+- **Decision:** apply D-004's second fallback: 3 seeds for every experiment (≈ 121 worker-h ≈ 10.1 h). Exp A's
+  seeds are reused for Greedy and GRAd in Exp B. **After the defense**, run 2 more seeds for Exp B (the plan of
+  D-004) and update the article's figures and statistics before the final release.
+- **Alternatives rejected:** keeping 5 seeds for Exp B (does not fit before the defense); cutting configurations
+  or protocols instead (the PDF requires the full testbed for every protocol, R2–R4).
+- **Consequence:** 95 % CI half-width is 2.48·s instead of 1.24·s on the main claim. Paired differences (M22) keep
+  real effects detectable; any non-significant difference is reported as such (SPEC §8.3).
+- **Defence:** "With the compute available we used 3 paired seeds for every experiment, the same as the
+  diagnostic; claims are only made where the paired 95 % CI excludes zero."
+- **Status:** accepted for the defense version; revisit after 2026-11-09 (5-seed Exp B).
+
+## D-010 — Scope and priority order for the defense
+- **Date / phase:** 2026-11-07, before P1. Decided by the team (Youssef). **Serves:** bonus (+3/20), oral (15 %).
+- **Decision:** order of work: (1) mandatory core R1–R9 (SPEC §1.2); (2) bonus B1, cross-layer MAC
+  retransmission rate (named in the subject's description, PDF p. 15); (3) the τ̂-coloured animation for the
+  oral (kept: it is the visual hook of the talk and Video 2 of the demo, SPEC §12.2); (4) bonus B2, fixed-sink
+  data collection, only if (1)–(3) are finished. B3 (UavNetSim v2 city test) moves to after the defense.
+- **Why this order:** the core is worth 55 % (30 % mastery + 25 % rigour); a bonus counts only when finished with
+  its own measured result (PDF p. 3), so one finished bonus beats two half-done ones. B1 comes before B2 because
+  the subject names it explicitly, and it reuses LEAP's `penalize()` hook (≈ 30 lines).
+- **Defence:** "We finished the required core first, then the extension the subject suggests directly."
 - **Status:** accepted.
