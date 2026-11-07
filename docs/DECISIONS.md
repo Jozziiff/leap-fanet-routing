@@ -174,3 +174,40 @@ Status values: **accepted** (in force), **superseded by D-xxx**, **revisit at <g
   the subject names it explicitly, and it reuses LEAP's `penalize()` hook (≈ 30 lines).
 - **Defence:** "We finished the required core first, then the extension the subject suggests directly."
 - **Status:** accepted.
+
+## D-011 — How the recorder counts recomputations and attributes losses
+- **Date / phase:** 2026-11-07, P1. **Serves:** R2, R3, O2 (the diagnostic's two headline metrics).
+- **Decisions:**
+  1. **Hooks in shared code only** (drone, MAC, PHY, metrics), none in the seven protocols. Every protocol is
+     measured by the same code, and the patch stays small (PATCHES P6).
+  2. **A route computation** is a `next_hop_selection` call at the shared call site in `Drone.feed_packet`,
+     i.e. a decision that forwards or parks a packet. Protocols also poll their waiting list every 0.6 s
+     (e.g. `dsdv.py:287`); those polls are not counted, otherwise the metric would measure the polling period.
+  3. **A recomputation** is (a) a second or later decision for the same packet copy at the same node
+     (`WAIT_RETRY`), (b) a route-discovery broadcast (`DISCOVERY`, GRAd), or (c) a different next hop on a
+     transmission that follows an ACK timeout at that node (`RETRY_SWITCH`). Greedy's MAC retries go to the
+     same next hop and are not recomputations (SPEC §5.2). Duplicate copies created by lost ACKs are not
+     counted as recomputations.
+  4. **A failed reception is a link break** if its SNR without interference is below the 6 dB threshold
+     (distance > R_max = 249.3 m), else a collision; exact on this PHY (M15, M16). A decodable frame beaten by
+     a stronger one (`NOT_SELECTED`) counts as a collision.
+  5. **One final cause per lost packet**, from the last thing that happened to it (rules in the recorder's
+     docstring). Copies created by lost ACKs: the cause is that of the latest terminal event. Packets still
+     active at the end are `IN_FLIGHT` and excluded from loss shares; a packet in a waiting list at the end
+     is `NO_ROUTE`.
+  6. **GRAd** (broadcast, no ACK): attribution from receptions, with a protocol-specific `DISCARD` bucket for
+     copies the gradient rule chose not to forward. Reported as an approximation.
+  7. **Every Exp-A run saves its event log** (`*.events.jsonl.gz`), so attribution can be recomputed offline
+     if a rule must change, without re-running the simulations.
+- **Alternatives rejected:** wrapping each protocol (seven different code paths, larger patch); counting
+  `collision_num` as losses (it counts any interference, even on decoded frames, M17); counting every
+  waiting-list poll (depends on the polling period).
+- **Validation:** unit tests T7 (`tests/test_recorder.py`: out-of-range → link break, in-range → collision,
+  winner/not-selected, unacknowledged → queue overflow, lost ACK on a broken link → link break, waiting →
+  no route, recomputation rules); T6 conservation (generated = delivered + lost + in flight) for all 7
+  protocols; T4 golden test bit-identical. A bug found while validating: the shared retry counter (M21) made
+  packets that loop back look like retries; `RETRY_SWITCH` now requires a preceding ACK timeout (Greedy:
+  0 switches over 165 ACK timeouts, as expected).
+- **Defence:** "A loss is a link break when the receiver could not have decoded the frame even without any
+  interference, computed with the simulator's own path-loss formula, so the split is exact on this platform."
+- **Status:** accepted.

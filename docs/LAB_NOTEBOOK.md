@@ -78,3 +78,26 @@ One protocol × one seed over the 11 configurations ≈ 10 529 s. Tiered plan �
 - **§5 Threats to validity:** one fresh process per run (M4); λ = 1 reference chosen because λ = 5 saturates
   (D-005); 30-s runs.
 - **Oral Q&A:** "Why disable energy?" → D-007 numbers. "Is λ = 1 realistic?" → D-005 numbers.
+
+---
+
+## 2026-11-07 (night) — Phase 1: instrumentation validated
+
+### Golden test T4 (hooks and recorder on, upstream values) — passed
+Recorder attached, `run_one.py`, N = 10, speed 10, λ = 5, seed 2025, traffic window [0, ∞):
+
+| Run | Reference (upstream untouched) | Result |
+|---|---|---|
+| DSDV, energy on (upstream defaults) | `results/phase0/golden/dsdv_default_warning` | bit-identical: 754 gen, 707 deliv, delay 24.672039603960396 ms, hops 1.6336633663366336, control 656, collision_num 0 |
+| Greedy, energy off | `results/phase0/bench/n10_l5` | bit-identical: 1447 gen, 1106 deliv, same delay, hops, control 600, collision_num 62 |
+
+### First recorder outputs on those runs (pilot, one seed, no traffic window: not article results)
+- DSDV defaults: 35 losses, all `LINK_BREAK`; 12 in flight (drones asleep from 16.45 s, energy on).
+- Greedy N=10 λ=5: 339 losses = 125 `LINK_BREAK` + 214 `NO_ROUTE`, 0 `COLLISION`; RR = 0.10
+  (107 waiting-list retries). True hop count 1.417 vs upstream 1.42 (M20).
+- Reading (to confirm in Exp A): at N = 10, losses come from link breaks and missing neighbours, not from
+  collisions, because MAC retries recover most collisions.
+
+### Tests
+`pytest`: 26 passed (T2 interface, T5 paired traffic, T6 conservation for 7 protocols, T7 classifier, T8 hop
+count), 2 slow golden tests run separately (above).

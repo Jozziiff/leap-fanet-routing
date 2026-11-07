@@ -2,7 +2,7 @@
 
 **Course:** Futurs Réseaux Mobiles — RT5, INSAT (Université de Carthage), 2026/2027 · **Supervisor:** Dr Mériem Afif
 **Team:** Youssef Hamdani · Rayen Hamza
-**Spec version:** **v1.4** (2026-11-07). Defense Mon 2026-11-09 09:00. Phase 0 done, G0 passed, seed plan decided (§8.2). Decisions: [`DECISIONS.md`](DECISIONS.md); run records: [`LAB_NOTEBOOK.md`](LAB_NOTEBOOK.md). No GitHub repo until the team decides. Changelog in §17.
+**Spec version:** **v1.5** (2026-11-07). Defense Mon 2026-11-09 09:00. Phase 0 done, G0 passed, seed plan decided (§8.2). Decisions: [`DECISIONS.md`](DECISIONS.md); run records: [`LAB_NOTEBOOK.md`](LAB_NOTEBOOK.md). No GitHub repo until the team decides. Changelog in §17.
 
 > **Tags.** **[PDF]** required by the subject (`Projets_TP_Futurs_Reseaux_Mobiles.pdf`, pp. 1, 3–4, 15–16), non-negotiable · **[CODE]** verified in UavNetSim-v1 `v1.0.1` (see [`UPSTREAM_FACTS.md`](UPSTREAM_FACTS.md), facts M1–M26) · **[DECISION]** our choice, justify it in the article · **[EST]** estimate, validate by a run · **[VERIFY]** check before citing.
 
@@ -115,7 +115,7 @@ Python **3.12** via `uv` (system 3.14 is incompatible with the pinned numpy 2.2.
 
 ### 5.2 R2 — Route recomputations per delivered packet
 - **Route computation** = one routing decision for a data packet at a node (`next_hop_selection` call).
-- **Recomputation** = a computation for packet *p* at node *i* that is **not the first** one for (*p*, *i*) (waiting-list retry, switch, repair), **plus explicit route discoveries** (GRAd `M_REQUEST`, OPAR re-planning at a relay). DSDV table updates are reported separately as overhead.
+- **Recomputation** = a computation for packet *p* at node *i* that is **not the first** one for (*p*, *i*) (waiting-list retry, switch, repair), **plus explicit route discoveries** (GRAd `M_REQUEST`) **and next-hop changes between MAC retries** (`RETRY_SWITCH`, used by LEAP's repair). OPAR relays never re-plan (M36), so OPAR's recomputations are source-side waiting-list retries. Exact definitions: `instrumentation/recorder.py` docstring, DECISIONS D-011. DSDV table updates are reported separately as overhead.
 - `RR = #recomputations / #delivered` (+ breakdown by kind). Note for the article [CODE M12]: Greedy's MAC retries are *not* recomputations, since they go to the same next hop. That is the weakness LEAP targets.
 
 ### 5.3 R3 — Loss attribution (exact on this platform)
@@ -548,6 +548,7 @@ At each checkpoint, re-read the requirement → compare with what was built → 
 | **Before release** | Fresh clone on the other laptop → README quickstart → `make test` → `make figures` reproduces the figures. |
 
 ## 17. Changelog
+- **v1.5 (2026-11-07):** Phase 1 instrumentation implemented (P1–P7, recorder, runner, sweep, tests T2 and T4–T8; T4 golden test passed). Corrected §5.2: OPAR has no relay re-planning (M36). New facts M35–M38. Recorder method in D-011.
 - **v1.4 (2026-11-07):** defense version uses 3 seeds everywhere (D-009); 5-seed Exp B after the defense. Priority order core → B1 → animation → B2 (if time); B3 after the defense (D-010).
 - **v1.3 (2026-11-07):** seed plan decided at G0: tiered 3/5 kept (D-004). Added `docs/DECISIONS.md` (decision log with alternatives, reasons and Q&A defence; D-001 to D-007) and `docs/LAB_NOTEBOOK.md` (dated run records with every number and its source file), to feed the article, README and oral.
 - **v1.2 (2026-11-07), Phase 0 / G0:** UavNetSim-v1 `v1.0.1` (`a5622c5d0a9f7b62b4e1d5a7dcc8978f34f0c85f`, verified) exported into the project; Python 3.12.15 venv with pinned deps. Phase-0 runs use a runtime harness (`experiments/phase0/`), upstream files untouched. **Runtime table** (Greedy, 30 s, v = 10, energy off, seed 2025, ~6 concurrent runs on 8 cores; wall s / peak RSS MB / PDR %): N=10 λ=1 254/116/78.3 · N=10 λ=5 435/118/76.4 · N=30 λ=1 938/160/86.1 · N=30 λ=5 1049/168/58.9 · N=50 λ=1 1658/244/87.3 · N=50 λ=5 1711/258/20.4. Confirms [EST] that λ = 5 saturates N ≥ 30 (delay 2.2 s and 3.7 s) while λ = 1 does not (N = 50 delay 19 ms). **Confirmed by runs:** M20 (4.7 % of delivered packets inflated at N=30 λ=5, +3.4 % mean hop count), M22 (traffic and trajectories bit-identical across Greedy/DSDV/GRAd; sub-channel draws differ), M26 (sleep at 14.15/16.45/19.55 s for 5/10/20 m/s). **New facts** M28–M34 (GRAd 3.5× simulation cost; ghost packet after sleep; silent source-queue overflow counted as generated; unicast shares the packet object; polling-dominated linear-in-N cost; `.idea`/`.pyc` in upstream; observe-only probes behaviour-neutral). M5 corrected (logging level behaviour-neutral, no measurable slowdown). Compute estimate in §8.2.
