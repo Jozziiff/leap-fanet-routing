@@ -172,3 +172,43 @@ it contains 18 of the 33 Greedy runs needed as the paired baseline of Exp B. The
 laptop from the same frozen commit `dd71430` (same `run_one.py` arguments; subset config with only the `greedy`
 variant, kept in untracked `notes/`). When Rayen's shard arrives, the overlap is a cross-machine reproducibility
 check: the simulator is deterministic for a given seed and commit (golden test T4), so the files must match.
+
+## 2026-11-08 10:35 — Exp A complete (231 runs) and cross-machine reproducibility
+Rayen's shard 1 arrived (115 runs, 0 failed, commit `dd71430`, clean tree, Python 3.12.12, 8.4 h). The laptop
+re-run of the missing Greedy runs had finished 4 runs; all 4 are **identical in every metric** to Rayen's files
+(`greedy/n40_v10_r1_s{1,3}`, `greedy/n50_v10_r1_s{1,3}`; e.g. PDR 0.91878 on both), across two machines and
+Python 3.12.15 vs 3.12.12. The re-run was stopped and Rayen's files used; Exp A now has 33 runs for each of the
+7 protocols. **For Q&A / README:** results are reproducible bit for bit from the seed and the commit.
+
+## 2026-11-08 10:45 — Exp B results: paired comparison (seeds 1–3, 95 % CI, paired t-test)
+Source: `results/exp_b.csv` + `results/exp_a.csv` (Greedy, GRAd), table `figures/table_paired.csv`, figures
+`figures/fig4_pdr.pdf`, `fig5_cost.pdf`, `fig6_ablation.pdf`. PDR differences in percentage points.
+
+| Config (N, v, λ) | LEAP − Greedy | Reactive − Greedy | LEAP − Reactive |
+|---|---|---|---|
+| 10, 10, 1 | −0.33 ± 4.51 (ns) | +2.26 ± 4.10 (ns) | −2.58 ± 3.00 (ns) |
+| 20, 10, 1 | +2.94 ± 0.73 * | +2.81 ± 0.75 * | +0.14 ± 0.29 (ns) |
+| 30, 5, 1 | −0.01 ± 2.27 (ns) | +3.19 ± 1.74 * | −3.20 ± 0.70 * |
+| 30, 10, 0.5 | +7.50 ± 3.12 * | +7.68 ± 2.02 * | −0.17 ± 1.68 (ns) |
+| 30, 10, 1 | +6.96 ± 1.74 * | +7.65 ± 1.22 * | −0.69 ± 2.17 (ns) |
+| 30, 10, 2 | +5.27 ± 2.13 * | +6.50 ± 1.26 * | −1.23 ± 0.87 * |
+| 30, 10, 5 | −0.56 ± 7.33 (ns) | +5.94 ± 2.82 * | −6.50 ± 4.75 * |
+| 30, 15, 1 | +9.46 ± 0.33 * | +8.30 ± 0.16 * | +1.16 ± 0.43 * |
+| 30, 20, 1 | +13.72 ± 2.05 * | +11.77 ± 3.02 * | +1.95 ± 0.97 * |
+| 40, 10, 1 | +8.29 ± 2.39 * | +7.39 ± 1.53 * | +0.90 ± 0.87 * |
+| 50, 10, 1 | +9.42 ± 2.31 * | +7.38 ± 1.32 * | +2.04 ± 1.20 * |
+
+`*` = CI excludes 0 (all such cells have p < 0.05). Readings:
+1. LEAP beats Greedy significantly in 8 of 11 configurations; the gain grows with speed (+9.5 pp at 15 m/s,
+   +13.7 pp at 20 m/s) and density (+8.3 / +9.4 pp at N = 40 / 50). No gain at 5 m/s, at N = 10 or at λ = 5.
+2. The reactive control (switch next hop after an ACK timeout, no prediction) recovers most of the same gain
+   and beats Greedy in 10 of 11 configurations.
+3. LEAP beats the reactive control exactly where links break fastest (15–20 m/s, N = 40–50: +0.9 to +2.0 pp)
+   and loses where breaks are rare or load is high (5 m/s: −3.2 pp; λ = 2: −1.2 pp; λ = 5: −6.5 pp). Plausible
+   cause, to check: LEAP rejects the best-progress neighbour on prediction alone and does not rescue packets
+   after an ACK timeout caused by collisions, which dominate at high load; the reactive control does.
+4. LEAP − LEAP-select is 0.00 in 6 configurations and |≤ 0.38| pp elsewhere (ns): predictive repair almost
+   never fires on top of predictive selection (bit-identical runs where it never fires).
+5. LEAP vs GRAd: +47 to +87 pp where significant (9 of 11). GRAd pays with delays above 2 s and 4–6× more
+   control traffic per delivered packet (Fig. 5). Delay and control overhead of LEAP ≈ Greedy.
+Goes to article §5 (results, "explain why") and is the core of the oral's results slide.
