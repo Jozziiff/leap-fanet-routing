@@ -16,3 +16,7 @@ __pycache__
 notes/
 # raw experiment outputs (aggregated results and Phase-0 evidence are committed)
 results/raw/
+
+# Demo videos are release assets, not tracked (SPEC 18.1)
+figures/*.mp4
+figures/*.gif

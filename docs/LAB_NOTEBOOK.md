@@ -231,3 +231,11 @@ per run) gives XL something to react to. To be confirmed on the re-run.
 Re-run plan (11:35): Exp C LEAP runs on the laptop from `e1dbd01` (frozen worktree `leap-dev`), then tau_th
 re-frozen by D-016; reactive control re-run on the Windows PC in parallel (does not depend on tau_th); then
 Exp B LEAP-select + LEAP split between the Windows PC and Rayen's PC, Exp D and Exp E on the laptop.
+
+## 2026-11-08 12:50 — Demo animation rendered (oral hook, Video 2)
+`experiments/animate.py --tau-th-s 0.25` at commit `a15c769` (fixed code, frozen tau_th; hash shown on
+screen). Two recorded runs on the same seed: N = 20, 20 m/s, λ = 2 packets/s per UAV, seed 1, 20 s
+(traffic 1–19 s). Greedy: 89 packets lost to link breaks, PDR 0.858. LEAP-GR: 0 link-break losses, PDR 0.981,
+350 proactive switches and repairs. Output `figures/leap_vs_greedy.mp4` (1920×1080, 20 s, 20 fps) and `.gif`,
+not tracked in git (release assets). Top view only: altitude is not drawn. Demo numbers, one seed: never
+quoted as results.
