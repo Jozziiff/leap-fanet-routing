@@ -283,11 +283,54 @@ def fig_tau(c: pd.DataFrame, out: Path) -> None:
     save(fig, out, "fig7_tau")
 
 
+def fig_crosslayer(b: pd.DataFrame, d: pd.DataFrame, out: Path) -> None:
+    """Fig. 8 (bonus B1): LEAP-GR vs LEAP-GR + cross-layer weighting, PDR and ACK timeouts per configuration."""
+    configs = [({"n": 30, "speed": v, "rate": 1.0}, f"{v:g} m/s") for v in (5.0, 10.0, 15.0, 20.0)]
+    configs.append(({"n": 30, "speed": 10.0, "rate": 5.0}, r"$\lambda$=5"))
+    both = pd.concat([b[b["label"] == "leap"], d[d["label"] == "leap_xl"]])
+    fig, axes = plt.subplots(1, 2, figsize=(DOUBLE, 2.2))
+    width = 0.38
+    for ax, metric, scale, ylabel in (
+        (axes[0], "pdr", 100.0, "PDR (%)"),
+        (axes[1], "ack_timeouts", 1.0, "ACK timeouts per run"),
+    ):
+        for k, (label, hatch, name) in enumerate(
+            (("leap", "", "LEAP-GR"), ("leap_xl", "//", "LEAP-GR + XL"))
+        ):
+            means, cis = [], []
+            for fixed, _ in configs:
+                s = summarize(subset(both[both["label"] == label], fixed), metric, by=["label"])
+                means.append(scale * s["mean"].iloc[0] if not s.empty else float("nan"))
+                cis.append(scale * s["ci"].fillna(0).iloc[0] if not s.empty else 0.0)
+            xs = [i + (k - 0.5) * width for i in range(len(configs))]
+            ax.bar(
+                xs,
+                means,
+                width=width,
+                yerr=cis,
+                capsize=2,
+                color=STYLE["leap"][1],
+                hatch=hatch,
+                edgecolor="white",
+                linewidth=0.8,
+                label=name,
+                alpha=1.0 if k == 0 else 0.55,
+            )
+        ax.set_xticks(range(len(configs)), [c[1] for c in configs])
+        ax.set_ylabel(ylabel)
+    axes[0].set_ylim(50, 102)
+    axes[0].set_xlabel(r"$N$=30; mean speed ($\lambda$=1) or load")
+    axes[1].set_xlabel(r"$N$=30; mean speed ($\lambda$=1) or load")
+    axes[0].legend(frameon=False, loc="lower left")
+    save(fig, out, "fig8_crosslayer")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--exp-a", type=Path)
     ap.add_argument("--exp-b", type=Path)
     ap.add_argument("--exp-c", type=Path)
+    ap.add_argument("--exp-d", type=Path)
     ap.add_argument("--out", type=Path, default=Path("figures"))
     a = ap.parse_args()
     setup()
@@ -319,6 +362,8 @@ def main() -> None:
         pd.concat(table).to_csv(a.out / "table_paired.csv", index=False)
     if a.exp_c:
         fig_tau(pd.read_csv(a.exp_c), a.out)
+    if a.exp_b and a.exp_d:
+        fig_crosslayer(pd.read_csv(a.exp_b), pd.read_csv(a.exp_d), a.out)
 
 
 if __name__ == "__main__":

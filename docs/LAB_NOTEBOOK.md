@@ -239,3 +239,56 @@ screen). Two recorded runs on the same seed: N = 20, 20 m/s, λ = 2 packets/s pe
 350 proactive switches and repairs. Output `figures/leap_vs_greedy.mp4` (1920×1080, 20 s, 20 fps) and `.gif`,
 not tracked in git (release assets). Top view only: altitude is not drawn. Demo numbers, one seed: never
 quoted as results.
+
+## 2026-11-08 12:15 — Exp C re-run (fixed code): tau_th re-frozen at 0.25 s
+Source: `leap-dev/results/raw/exp_c_tuning/` (LEAP runs at `e1dbd01`, 15 runs, 0 failed; Greedy runs reused),
+`docs/tau_freeze.json`, commit `a15c769`. Mean PDR (seeds 100–102, N = 30, 20 m/s, λ = 1):
+
+| tau_th (s) | 0.25 | 0.5 | 1 | 2 | 4 | Greedy |
+|---|---|---|---|---|---|---|
+| mean PDR | 0.9919 | 0.9896 | 0.9855 | 0.9765 | 0.9502 | 0.8036 |
+
+Per seed at 0.25 s: 0.9946 / 0.9892 / 0.9918 (buggy code: 0.9906 / 0.9865 / 0.9767); 0 packets left in flight
+(buggy: 7 / 9 / 14). Same rule, same choice; the large thresholds gained most from the fix (4 s: 0.857 → 0.950).
+
+## 2026-11-08 14:50 — Exp B complete with the fixed code (99 runs): paired results
+Sources: Windows PC (reactive control, commit `e02ae22`, 33 runs; LEAP-select + LEAP shard 0/2, `6d2826a`,
+33 runs) and Rayen's PC (shard 1/2, `6d2826a`, 33 runs); all clean trees; `6d2826a` = `a15c769` + one docs
+commit. 0 packets in flight in every run with λ < 5. Tables `results/exp_b.csv`, `figures/table_paired.csv`;
+figures `fig4_pdr`, `fig5_cost`, `fig6_ablation`. PDR differences in percentage points, 3 paired seeds:
+
+| Config (N, v, λ) | LEAP − Greedy | Reactive − Greedy | LEAP − Reactive |
+|---|---|---|---|
+| 10, 10, 1 | +1.95 ± 4.27 (ns) | +2.26 ± 4.10 (ns) | −0.31 ± 0.66 (ns) |
+| 20, 10, 1 | +3.01 ± 0.75 * | +2.81 ± 0.75 * | +0.21 ± 0.00 * (1 packet per seed) |
+| 30, 5, 1 | +2.55 ± 1.85 * | +3.19 ± 1.74 * | −0.65 ± 0.52 * |
+| 30, 10, 0.5 | +8.67 ± 2.87 * | +7.68 ± 2.02 * | +1.00 ± 1.08 (ns) |
+| 30, 10, 1 | +8.67 ± 0.56 * | +7.84 ± 0.95 * | +0.83 ± 0.66 * |
+| 30, 10, 2 | +6.90 ± 0.91 * | +6.61 ± 0.99 * | +0.29 ± 0.10 * |
+| 30, 10, 5 | −0.14 ± 7.31 (ns) | +4.82 ± 4.67 * | −4.95 ± 2.65 * |
+| 30, 15, 1 | +10.34 ± 0.43 * | +8.30 ± 0.75 * | +2.04 ± 1.05 * |
+| 30, 20, 1 | +14.73 ± 2.81 * | +11.72 ± 3.15 * | +3.01 ± 0.43 * |
+| 40, 10, 1 | +8.33 ± 2.37 * | +7.42 ± 1.65 * | +0.90 ± 0.72 * |
+| 50, 10, 1 | +9.42 ± 2.31 * | +7.38 ± 1.32 * | +2.04 ± 1.20 * |
+
+LEAP − LEAP-select: exactly 0 in 7 configurations, |≤ 0.37| pp (ns) in the others: predictive repair never
+matters once selection is predictive. LEAP − GRAd: +47 to +87 pp, significant in 9 of 11.
+
+Mechanism (means per run, `results/exp_b.csv`):
+- 30/20/1: link-break losses Greedy 115.0, reactive 30.7, LEAP 8.7; ACK timeouts 575.7 / 242.3 / 44.7. The
+  reactive control must fail once before switching; LEAP avoids the failed attempt. LEAP hops 2.00 vs 1.69.
+- 50/10/1: link-break losses 117.0 / 25.3 / 0.0; ACK timeouts 589.3 / 226.3 / 4.3; only 4 risky forwards per
+  run: in a dense swarm a safe alternative almost always exists.
+- 30/5/1: link-break losses 29.7 / 6.7 / 9.7; LEAP makes 30 risky forwards per run (no safe neighbour with
+  progress) and, unlike the reactive control, does not rescue a packet after an ACK timeout; hops 2.03 vs 1.81.
+- 30/10/5: LEAP delivers 2617 vs 2805 for the reactive control; expired 370.7 vs 264.0; delay 2885 vs 2568 ms;
+  hops 1.74 vs 1.67. At saturation the extra hops of the safer, shorter links add queueing, and packets expire.
+Exp E (LEAP selection + reactive repair) tests whether adding the rescue closes the 5 m/s and λ = 5 gaps.
+
+## 2026-11-08 13:20 — Exp D re-run (fixed code, bonus B1): no PDR gain
+Source: `leap-dev/results/raw/exp_d_crosslayer/` (commit `a15c769`, 15 runs, 0 failed), paired with Exp B's
+LEAP runs; figure `fig8_crosslayer`. LEAP+XL − LEAP, PDR: +0.19 ± 0.21 (5 m/s), +0.09 ± 0.20 (10), +0.05 ± 0.20
+(15), +0.19 ± 0.54 (20), −1.99 ± 3.47 (λ = 5) pp, none significant. ACK timeouts at λ = 5: 273.7 → 239.3 per run
+(−34.3 ± 13.7, p = 0.0085); elsewhere ns. Reading: XL lowers retransmissions where there are many, but the
+neighbours it avoids were not where packets were lost (losses at λ = 5 are queue expiry and no route). Null
+result, reported as such. λ = 5 runs end with 521–686 packets still queued, like Greedy (410–598): saturation.
