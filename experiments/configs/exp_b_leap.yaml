@@ -1,0 +1,18 @@
+# Experiment B, part 2: LEAP-select (A1) and LEAP (A2) (SPEC §7, §8; R8, R9).
+# tau_th = 0.25 s, frozen from Exp C by the pre-registered rule of DECISIONS D-016 (experiments/freeze_tau.py).
+# Same 11 configurations and seeds 1-3 as Exp A (Greedy, GRAd reused) and as the reactive control (part 1).
+name: exp_b_comparison
+seeds: [1, 2, 3]
+fixed:
+  sim_time_s: 30
+  traffic_start_s: 2
+  traffic_end_s: 27
+  energy: "off"
+reference: {n: 30, speed: 10, rate: 1}
+sweeps:
+  n: [10, 20, 30, 40, 50]
+  speed: [5, 10, 15, 20]
+  rate: [0.5, 1, 2, 5]
+variants:
+  - {label: leap_select, protocol: leap, params: {tau_th_s: 0.25, repair: "off"}}
+  - {label: leap, protocol: leap, params: {tau_th_s: 0.25, repair: predictive}}
