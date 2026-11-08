@@ -48,7 +48,9 @@ Subject: *Routage prédictif basé sur la qualité de lien dans un essaim d'UAV*
 
 ## Current status (update when a phase changes)
 - Defense: **Mon 2026-11-09, 09:00** (10 min talk + 10 min Q&A).
-- Phase 0 and Phase 1 done (instrumentation validated, golden test T4 bit-identical). Exp A running since 2026-11-07 22:44: shard 0/2 on Youssef's laptop, shard 1/2 on Rayen's. Next: Phase 2 (LEAP-GR in `routing/leap/`, tests T1–T3, τ_th tuning).
+- Phases 0–2 done. Exp A complete (231 runs, final). LEAP-GR implemented on `feat/leap-next`; a self-selection bug (M40, D-018) was fixed on 2026-11-08 (`2327be4`), so every LEAP-based run is being redone: Exp C re-tuning, then Exp B, D, E. All LEAP numbers recorded before that fix are superseded.
+- Article draft in `paper/` (diagnosis section final; LEAP results pending the re-runs). Project README written.
+- Experiments run from frozen worktrees (D-013); development happens on `feat/leap-next`, which is merged into `main` once the results are final.
 - Where things are: decisions `docs/DECISIONS.md`, measurements `docs/LAB_NOTEBOOK.md`, simulator facts `docs/UPSTREAM_FACTS.md`, upstream changes `PATCHES.md`.
 
 ## Professional-repo standard (team goal: CV/LinkedIn-grade repo) — SPEC §18
