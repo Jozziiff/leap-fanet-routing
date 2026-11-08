@@ -1,5 +1,18 @@
 \begin{abstract}
-\pending{Abstract (150--250 words: context, challenge, approach, main numbers), written last from the frozen results.}
+Routing in flying ad hoc networks suffers from links that break as UAVs move, and most protocols react only
+after a transmission has failed. We first measure where packets are lost. On the UavNetSim-v1 simulator, whose
+deterministic physical layer lets us classify every failed reception as out of range or interference, we
+attribute the losses of seven protocols (DSDV, Greedy, GRAd, OPAR, Q-Routing, QGeo, Q-FANET) over 231 runs.
+Collisions almost never cause a loss, since MAC retransmissions absorb them, whereas link breaks cost Greedy
+forwarding 9.8\,\% of its packets at 10\,m/s and 16.0\,\% at 20\,m/s. We then propose LEAP-GR, a distributed
+geographic protocol that forwards like Greedy unless the chosen neighbour's link expiration time, computed
+from positions and velocities carried in hello messages, falls below a threshold. With an identical MAC and
+paired seeds, LEAP-GR raises the packet delivery ratio over Greedy in 9 of 11 configurations, by up to 14.7
+points (98.7\,\% against 84.0\,\% at 20\,m/s), at the cost of slightly longer paths and 128 bits per hello. An
+ablation with a reactive control shows that prediction beats switching after a failure by 0.9 to 3.0 points
+at high speed and density, but not at low speed or under saturation. Most of the gain comes from discarding
+neighbours that have already left, which the platform's 2\,s neighbour lifetime keeps in the table. A
+cross-layer weighting by MAC retransmission rate does not improve delivery.
 \end{abstract}
 
 \begin{IEEEkeywords}

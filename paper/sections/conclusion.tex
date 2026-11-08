@@ -1,8 +1,20 @@
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
 
-\pending{Contributions with the final numbers; where prediction helps and where it does not; written last
-from the frozen results.}
+We measured where FANET routing protocols lose packets and tested whether predicting link lifetimes avoids
+those losses. On UavNetSim-v1, collisions are almost never the final cause of a loss: the MAC's five attempts
+absorb them, and congestion shows up as queueing and expiry instead. Link breaks are the dominant loss for
+Greedy forwarding and grow with speed, from 4.1\,\% to 16.0\,\% of generated packets between 5 and 20\,m/s.
+
+LEAP-GR forwards like Greedy unless the chosen link is predicted to expire within $\tauth=0.25$\,s. With the
+same MAC and seeds it delivers up to 14.7 points more than Greedy and up to 87 points more than GRAd, for
+128 bits per hello and 0.2--0.3 more hops per packet. The ablation shows what the prediction itself is worth:
+against a control that switches neighbour after every failed attempt, LEAP-GR gains 0.9 to 3.0 points
+at 15--20\,m/s and at $N=40$--50, where breaks are frequent and safe alternatives exist, and loses at 5\,m/s
+and under saturation, where its longer paths cost more than the breaks it avoids. The mechanism is mostly
+short-horizon: 98.4\,\% of its switches avoid a neighbour that, extrapolated from its last hello, has already
+left. Predictive repair after a failure adds nothing once selection is predictive, and weighting neighbours by
+their recent retransmission rate lowers retransmissions without improving delivery.
 
 \textbf{Limits.} The study uses a free-space channel, Gauss--Markov mobility, 30\,s runs and three seeds per
 configuration; the predictor assumes that each UAV knows its own velocity and that destination positions are

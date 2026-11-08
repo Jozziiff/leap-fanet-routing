@@ -214,8 +214,13 @@ $N$, $\bar v$, $\lambda$ & LEAP$-$Greedy & R$-$Greedy & LEAP$-$R \\
 \end{tabular}
 \end{table}
 
-\pending{Exp E (exploratory): LEAP selection combined with reactive repair; does the rescue close the
-5\,m/s and $\lambda=5$ gaps?}
+\textbf{Post-hoc check.} These two losses suggest a combination that we had not planned: LEAP-GR's
+selection with the reactive control's repair. We ran it on the same configurations and seeds, and report it
+as exploratory because it was defined after seeing the results. Adding the reactive rescue raises PDR at
+5\,m/s by $0.42\pm0.35$ points over LEAP-GR, which closes the gap with the reactive control ($-0.23\pm0.39$,
+not significant), and reaches 99.2\,\% at 20\,m/s. At $\lambda=5$ it does not help ($-2.3\pm2.4$ points, not
+significant; 414 expired packets per run): the loss there comes from longer paths in a saturated channel, not
+from a missing rescue.
 
 \subsection{Cross-layer weighting}
 \label{sec:xl}

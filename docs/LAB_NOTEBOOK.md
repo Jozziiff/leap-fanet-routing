@@ -292,3 +292,16 @@ LEAP runs; figure `fig8_crosslayer`. LEAP+XL − LEAP, PDR: +0.19 ± 0.21 (5 m/s
 (−34.3 ± 13.7, p = 0.0085); elsewhere ns. Reading: XL lowers retransmissions where there are many, but the
 neighbours it avoids were not where packets were lost (losses at λ = 5 are queue expiry and no route). Null
 result, reported as such. λ = 5 runs end with 521–686 packets still queued, like Greedy (410–598): saturation.
+
+## 2026-11-08 15:35 — Exp E complete (exploratory, D-017): LEAP selection + reactive repair
+Source: `leap-dev/results/raw/exp_b_comparison/leap_reactive/` (commit `a15c769`, 33 runs, 0 failed), merged
+into `results/exp_b.csv` as label `leap_reactive`. Paired PDR differences (pp, 3 seeds):
+- vs LEAP-GR: +0.42 ± 0.35 * at 5 m/s; +0.20 ± 0.00 * at λ = 2 (constant over seeds); −2.26 ± 2.44 (ns) at
+  λ = 5; ns or exactly 0 elsewhere (identical runs at N = 10, 20, 40, 50 and λ = 0.5).
+- vs reactive control: 5 m/s −0.23 ± 0.39 (ns; was −0.65 * for LEAP-GR); λ = 5 −7.22 ± 1.56 *; +1.11 to +3.48 *
+  at 10–20 m/s and N = 40–50.
+- vs Greedy: +15.20 ± 2.37 * at 20 m/s (PDR 0.992).
+- λ = 5 means per run: expired 413.7 (LEAP 370.7, reactive control 264.0), delay 2934 ms.
+Reading: adding the reactive rescue closes the 5 m/s gap (it was the missing rescue after an ACK timeout),
+but not the λ = 5 gap, which comes from longer paths in a saturated channel. Exploratory, chosen after seeing
+test results: reported as a post-hoc check, not as the main protocol.
