@@ -100,30 +100,141 @@ alternative when a link fails, and its retries are spent on a neighbour that has
 \subsection{Choice of the threshold}
 \label{sec:tau}
 
-\pending{Fig.~7 (re-run of Exp C on tuning seeds 100--102, $N=30$, 20\,m/s, $\lambda=1$): PDR, proactive
-switches and shadow-mode precision/recall versus $\tauth$; the frozen value and why PDR falls for large
-$\tauth$. Shadow-mode facts (unaffected by the fix): recall 680/680 at every window; precision 0.40 to 0.56
-from 0.25 to 4\,s; median lead time about 4.5\,ms, i.e.\ most warnings concern neighbours that have already
-left.}
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{fig7_tau}
+\caption{Threshold study on the tuning seeds 100--102 ($N=30$, 20\,m/s, $\lambda=1$). Left: PDR of LEAP-GR
+versus $\tauth$, with Greedy's mean. Centre: proactive switches per delivered packet. Right: shadow mode
+(LEAP-GR logs warnings but forwards like Greedy, seed 100): share of warnings followed by a real break
+(precision) and share of transmissions to an out-of-range receiver that were warned (recall).}
+\label{fig:tau}
+\end{figure*}
+
+We fixed the selection rule before the tuning runs finished: take the smallest $\tauth$ whose mean PDR is
+within 0.5 percentage points of the best. \Cref{fig:tau} (left) shows that PDR decreases monotonically with
+the threshold, from 99.2\,\% at $\tauth=0.25$\,s to 95.0\,\% at 4\,s, against 80.4\,\% for Greedy, so the
+rule selects $\tauth=0.25$\,s. A larger threshold rejects links that would still have carried the packet:
+switches per delivered packet rise from 0.70 to 0.97 (centre) and paths lengthen from 2.26 to 2.38 hops.
+
+The shadow-mode runs explain why a small threshold is enough. Every one of Greedy's 680 transmissions to an
+out-of-range receiver was preceded by a warning (recall 1.0 at every window), but the median warning came
+only 4.4--4.8\,ms before the failed transmission. Indeed, 98.4\,\% of LEAP-GR's proactive switches at
+$\tauth=0.25$\,s happen when the chosen neighbour's extrapolated position is already beyond $0.9\Rmax$
+($\taute=0$). Greedy keeps a neighbour for 2\,s after its last hello; at 20\,m/s two UAVs flying apart can separate by up to
+80\,m in that time, and the neighbour closest to the destination is often one that has already left. Most of
+LEAP-GR's gain therefore comes from \emph{not trusting stale neighbours}, which the velocity in the hello
+makes possible, rather than from anticipating breaks seconds ahead. Longer warning windows raise precision
+only from 40\,\% to 56\,\%: with a Gauss--Markov velocity redrawn every 0.5\,s, a constant-velocity
+extrapolation over several seconds is unreliable.
 
 \subsection{Comparison with Greedy and GRAd}
 \label{sec:comparison}
 
-\pending{Fig.~4 (PDR over the three sweeps: Greedy, GRAd, reactive control, LEAP-GR) and Fig.~5 (delay and
-control traffic). Text: figure, what it shows, why, takeaway. Paired table from \texttt{table\_paired.csv}.}
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{fig4_pdr}
+\caption{Packet delivery ratio over the three one-factor sweeps around $N=30$, 10\,m/s, $\lambda=1$ (seeds
+1--3, 95\,\% CI). Same seeds, trajectories, traffic and MAC for all protocols.}
+\label{fig:pdr}
+\end{figure*}
+
+\Cref{fig:pdr} compares PDR. LEAP-GR delivers more than Greedy in 9 of the 11 configurations with a
+significant paired difference, from $+2.6$ points at 5\,m/s to $+14.7$ points at 20\,m/s
+(98.7\,\% against 84.0\,\%), and $+9.4$ points at $N=50$, where it delivers all packets. The gain grows with
+speed because link breaks do: at 20\,m/s Greedy loses 115 packets per run to link breaks and suffers 576 ACK
+timeouts, LEAP-GR loses 8.7 and suffers 45. The two configurations without a significant gain are $N=10$,
+where the network is sparse and a safe alternative often does not exist, and $\lambda=5$, discussed below.
+In the $N$ sweep GRAd delivers 13--42\,\% for $N\ge30$: its broadcast forwarding without acknowledgements overflows queues as
+density grows, and LEAP-GR's advantage over it reaches 47 to 87 points.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig5_cost}
+\caption{Cost versus mean speed ($N=30$, $\lambda=1$, 3 seeds): mean end-to-end delay of delivered packets
+(log scale) and control traffic per delivered packet.}
+\label{fig:cost}
+\end{figure}
+
+The price of prediction is small (\cref{fig:cost}). Hellos grow by 128 bits, and LEAP-GR's control traffic per
+delivered packet is at most 0.3\,kbit above Greedy's 2.0--2.2\,kbit, because it delivers more packets
+with the same hello rate. Paths are longer, 2.0--2.1 hops against 1.7--1.8 for Greedy, since a neighbour that is
+predicted to stay is usually closer, so it makes less progress. Mean delay changes little at $\lambda=1$
+(136.7 against 139.3\,ms at 20\,m/s, 12.4 against 10.5\,ms at 5\,m/s). At $\lambda=5$ the extra hops cost
+more: the channel is saturated, and each additional transmission adds queueing (delay 2.88 against 2.57\,s).
 
 \subsection{Isolating the gain of prediction}
 \label{sec:ablation}
 
-\pending{Fig.~6 and Table~III: paired differences A1$-$A0, A2$-$A0, R$-$A0, A2$-$R per configuration;
-where prediction beats reacting and where it does not, and the mechanism (stale-neighbour filtering versus
-anticipation).}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig6_ablation}
+\caption{Paired PDR differences at $N=30$, 20\,m/s, $\lambda=1$ (3 seeds, 95\,\% CI). A0: Greedy; A1:
+LEAP-select; A2: LEAP-GR; R: reactive control.}
+\label{fig:ablation}
+\end{figure}
+
+\Cref{fig:ablation} separates the mechanisms at 20\,m/s, and \cref{tab:gains} lists all configurations.
+Prediction in the next-hop choice (A1$-$A0) brings $+14.7$ points. Predictive repair adds nothing on top
+(A2$-$A1 is exactly zero in 7 of 11 configurations and never significant): once the next hop is chosen with
+the prediction, the retries rarely go to a neighbour predicted to break. The reactive control, which switches
+neighbour after every ACK timeout without prediction, recovers most of the gain ($+11.7$ points), but LEAP-GR
+still beats it by $3.0\pm0.4$ points. The reactive control must first lose an attempt before it switches,
+and its new choice may be another stale neighbour: it keeps 242 ACK timeouts and 31 link-break losses per run.
+
+Prediction beats reaction where links break often: at 15 and 20\,m/s ($+2.0$ and $+3.0$ points) and at
+$N=40$--50 ($+0.9$ and $+2.0$), where a safe alternative almost always exists (4 forwards per run without
+one at $N=50$). It loses where they rarely break. At 5\,m/s ($-0.65$ points) LEAP-GR finds no safe neighbour
+with progress 30 times per run and then forwards like Greedy, without the rescue that the reactive control
+performs after a failure. At $\lambda=5$ ($-4.9$ points) losses come from queueing, not from link breaks; the
+longer paths of LEAP-GR add load to a saturated channel, and 371 packets per run expire against 264.
+
+\begin{table}[t]
+\centering
+\caption{Paired PDR differences (percentage points, mean $\pm$ 95\,\% CI half-width, 3 seeds). $^{*}$: CI
+excludes 0 (all such cases have $p<0.05$). At $N=20$ the LEAP$-$R difference is one packet per seed.}
+\label{tab:gains}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+$N$, $\bar v$, $\lambda$ & LEAP$-$Greedy & R$-$Greedy & LEAP$-$R \\
+\midrule
+10, 10, 1 & $+1.95\pm4.27$ & $+2.26\pm4.10$ & $-0.31\pm0.66$ \\
+20, 10, 1 & $+3.01\pm0.75^{*}$ & $+2.81\pm0.75^{*}$ & $+0.21\pm0.00^{*}$ \\
+30, 5, 1 & $+2.55\pm1.85^{*}$ & $+3.19\pm1.74^{*}$ & $-0.65\pm0.52^{*}$ \\
+30, 10, 0.5 & $+8.67\pm2.87^{*}$ & $+7.68\pm2.02^{*}$ & $+1.00\pm1.08$ \\
+30, 10, 1 & $+8.67\pm0.56^{*}$ & $+7.84\pm0.95^{*}$ & $+0.83\pm0.66^{*}$ \\
+30, 10, 2 & $+6.90\pm0.91^{*}$ & $+6.61\pm0.99^{*}$ & $+0.29\pm0.10^{*}$ \\
+30, 10, 5 & $-0.14\pm7.31$ & $+4.82\pm4.67^{*}$ & $-4.95\pm2.65^{*}$ \\
+30, 15, 1 & $+10.34\pm0.43^{*}$ & $+8.30\pm0.75^{*}$ & $+2.04\pm1.05^{*}$ \\
+30, 20, 1 & $+14.73\pm2.81^{*}$ & $+11.72\pm3.15^{*}$ & $+3.01\pm0.43^{*}$ \\
+40, 10, 1 & $+8.33\pm2.37^{*}$ & $+7.42\pm1.65^{*}$ & $+0.90\pm0.72^{*}$ \\
+50, 10, 1 & $+9.42\pm2.31^{*}$ & $+7.38\pm1.32^{*}$ & $+2.04\pm1.20^{*}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\pending{Exp E (exploratory): LEAP selection combined with reactive repair; does the rescue close the
+5\,m/s and $\lambda=5$ gaps?}
 
 \subsection{Cross-layer weighting}
 \label{sec:xl}
 
-\pending{Exp D: LEAP-GR vs LEAP-GR with cross-layer weighting on the speed sweep and at $\lambda=5$; with few
-ACK timeouts at $\lambda=1$ the weights stay near zero and the ranking does not change.}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig8_crosslayer}
+\caption{LEAP-GR with and without cross-layer weighting by the recent ACK-timeout rate ($N=30$, 3 seeds,
+95\,\% CI).}
+\label{fig:xl}
+\end{figure}
+
+\Cref{fig:xl} shows that weighting next hops by their recent ACK-timeout rate does not change PDR
+significantly in any configuration ($+0.05$ to $+0.19$ points at $\lambda=1$, $-2.0\pm3.5$ at $\lambda=5$). At
+$\lambda=1$ LEAP-GR suffers about 45 ACK timeouts per run, too few for the moving averages to move away from
+zero and change a ranking. At $\lambda=5$ the weighting does what it is designed to do, cutting ACK timeouts
+from 274 to 239 per run ($p=0.009$), but those retransmissions were not where packets were lost: losses at
+this load are queue expiries and missing routes. Avoiding unreliable neighbours cannot fix a saturated
+channel.
 
 \subsection{Threats to validity}
 
