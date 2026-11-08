@@ -36,7 +36,12 @@ def summarize(df: pd.DataFrame, metric: str, by: list[str] | None = None) -> pd.
     for key, g in df.groupby(by, sort=True):
         mean, half, n = ci95(g[metric])
         rows.append(
-            {**dict(zip(by, key if isinstance(key, tuple) else (key,))), "mean": mean, "ci": half, "n": n}
+            {
+                **dict(zip(by, key if isinstance(key, tuple) else (key,))),
+                "mean": mean,
+                "ci": half,
+                "n_seeds": n,
+            }
         )
     return pd.DataFrame(rows)
 
@@ -62,7 +67,7 @@ def paired(df: pd.DataFrame, metric: str, base: str, other: str) -> pd.DataFrame
                 "diff": mean,
                 "ci": half,
                 "p": p,
-                "n": n,
+                "n_seeds": n,
                 "significant": bool(not math.isnan(half) and abs(mean) > half),
             }
         )
