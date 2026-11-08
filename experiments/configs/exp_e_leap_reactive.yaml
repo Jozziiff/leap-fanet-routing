@@ -1,0 +1,18 @@
+# Experiment E (exploratory, defined after Exp B): LEAP selection combined with reactive repair.
+# Exp B showed LEAP ahead of the reactive control where links break fast and behind it at low speed and high
+# load; this variant tests whether the two mechanisms add up. Chosen after seeing test-seed results, so it is
+# reported as exploratory (DECISIONS D-017). tau_th stays at the value frozen by D-016.
+name: exp_b_comparison
+seeds: [1, 2, 3]
+fixed:
+  sim_time_s: 30
+  traffic_start_s: 2
+  traffic_end_s: 27
+  energy: "off"
+reference: {n: 30, speed: 10, rate: 1}
+sweeps:
+  n: [10, 20, 30, 40, 50]
+  speed: [5, 10, 15, 20]
+  rate: [0.5, 1, 2, 5]
+variants:
+  - {label: leap_reactive, protocol: leap, params: {tau_th_s: 0.25, repair: reactive}}

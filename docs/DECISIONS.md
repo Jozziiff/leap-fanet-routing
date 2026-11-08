@@ -299,3 +299,20 @@ Status values: **accepted** (in force), **superseded by D-xxx**, **revisit at <g
 - **Defence:** "The threshold was chosen on separate tuning seeds by a rule committed before the sweep finished;
   the test seeds never influenced it."
 - **Status:** accepted.
+
+## D-017 — Exploratory Exp E: LEAP selection combined with reactive repair
+- **Date / phase:** 2026-11-08 11:00, P3, after the Exp B paired results. **Serves:** R8/R9 (explain why),
+  rigour.
+- **Context:** in Exp B, LEAP beats the reactive control (no prediction, switch after every ACK timeout) by +0.9
+  to +2.0 pp at 15–20 m/s and N = 40–50, and loses by 1.2–6.5 pp at 5 m/s and λ = 2–5
+  (`figures/table_paired.csv`). LEAP's predictive repair never fires on top of its selection (LEAP − LEAP-select
+  ≈ 0), so LEAP does not recover from ACK timeouts that prediction cannot see (collisions, congestion).
+- **Decision:** run one more variant on the test configurations and seeds 1–3: `leap_reactive` = LEAP selection
+  at the frozen tau_th = 0.25 s with `repair: reactive` (existing code path, no code change), 33 runs
+  (`experiments/configs/exp_e_leap_reactive.yaml`). It is reported as **exploratory**: it was defined after
+  looking at test-seed results, so it is not part of the pre-registered comparison and is not tuned.
+- **Rejected:** retuning tau_th on the test seeds (would leak test data into the threshold); dropping the
+  configurations where LEAP loses (selective reporting).
+- **Defence:** "The main comparison was fixed in advance; this extra variant tests one explanation of a result
+  we observed, and we label it as a post-hoc check."
+- **Status:** accepted; laptop, from the frozen worktree `leap-dev`.
