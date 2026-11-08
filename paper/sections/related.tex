@@ -1,0 +1,62 @@
+\section{Related Work}
+\label{sec:related}
+
+\textbf{FANET routing.} Bekmezci~\emph{et~al.}~\cite{bekmezci2013fanet} define FANETs and point out what
+separates them from mobile and vehicular ad hoc networks: higher speeds, 3-D motion and frequent topology
+changes. Khan~\emph{et~al.}~\cite{khan2020survey} survey FANET routing schemes by family (topology-based,
+position-based, hierarchical, learning-based) and identify link instability as a central open problem.
+\Cref{tab:related} positions the protocols studied here.
+
+\textbf{Topology-based routing.} DSDV~\cite{perkins1994dsdv} is proactive: every node keeps a route to every
+destination, refreshed by periodic and triggered table updates with sequence numbers. Its control traffic
+grows with the network, and its routes lag behind the topology between updates. GRAd~\cite{poor2001grad}
+builds a cost-to-destination gradient on demand and forwards by broadcast: any neighbour that hears a packet
+and is closer to the destination relays it. On UavNetSim-v1 GRAd disables MAC acknowledgements, so it has no
+retransmissions and no single next hop.
+
+\textbf{Position-based routing.} GPSR~\cite{karp2000gpsr} forwards greedily to the neighbour closest to the
+destination and falls back on perimeter routing around voids. The platform's Greedy forwarding implements
+the greedy mode only: when no neighbour makes progress, the packet waits in a waiting list. Greedy needs no
+route state and adapts per packet, but it selects by distance alone and ignores how long the chosen link
+will last.
+
+\textbf{Prediction-based routing.} Su~\emph{et~al.}~\cite{su2001mobility} introduced the link expiration
+time: given the positions and velocities of two nodes and their range, the time until they separate has a
+closed form. OPAR~\cite{gharib2021opar} computes shortest paths constrained by such link lifetimes. On the
+platform, OPAR is centralised: the source reads the true positions and velocities of all UAVs. It is
+therefore an upper reference with global knowledge rather than a distributed competitor. TARRAQ~\cite{cui2022tarraq}
+predicts link duration with a Kalman filter and feeds it into adaptive Q-learning.
+
+\textbf{Learning-based routing.} Q-Routing~\cite{boyan1993qrouting} learns, for each neighbour, an estimate
+of the delivery time through it. QGeo~\cite{jung2017qgeo} applies Q-learning to geographic forwarding in
+unmanned robotic networks, and Q-FANET~\cite{dacosta2021qfanet} refines it for FANETs. Learning-based
+protocols react to observed outcomes. They need feedback before they adapt, and they do not explain why a
+packet was lost.
+
+\textbf{Gap.} Two things are missing for a fair judgement of prediction. The first is a measurement of how
+many losses are actually link breaks, separated from collisions and queueing. The second is a comparison
+that holds everything else fixed, including the MAC and the reaction to failures, so that the gain of
+prediction is isolated. This paper provides both, with a distributed predictor that uses only information
+carried in hello messages.
+
+\begin{table*}[t]
+\centering
+\caption{Protocols compared in this work, as implemented on UavNetSim-v1~v1.0.1 (``retry same hop'': the MAC resends to the same neighbour, up to five attempts).}
+\label{tab:related}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lllll@{}}
+\toprule
+Protocol & Family & Decision & Mobility prediction & After an ACK timeout \\
+\midrule
+DSDV~\cite{perkins1994dsdv} & topology, proactive & distributed & no & retry same hop \\
+GRAd~\cite{poor2001grad} & topology, on demand & distributed & no & n/a (no ACK) \\
+Greedy~\cite{karp2000gpsr} & position & distributed & no & retry same hop \\
+OPAR~\cite{gharib2021opar} & prediction & centralised & LET, oracle & retry same hop \\
+Q-Routing~\cite{boyan1993qrouting} & learning & distributed & no & retry same hop \\
+QGeo~\cite{jung2017qgeo} & learning, position & distributed & no & penalise $Q$, retry \\
+Q-FANET~\cite{dacosta2021qfanet} & learning, position & distributed & no & penalise $Q$, retry \\
+\textbf{LEAP-GR} (ours) & position, prediction & distributed & LET, from hellos & see \cref{sec:leap} \\
+\bottomrule
+\end{tabular}
+\end{table*}

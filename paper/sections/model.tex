@@ -1,0 +1,144 @@
+\section{System Model and Proposed Approach}
+\label{sec:model}
+
+\subsection{Network model}
+\label{sec:network}
+
+$N$ UAVs fly in a $600\times600\times100$\,m volume following the 3-D Gauss--Markov mobility
+model~\cite{broyles2010gaussmarkov} as implemented on the platform: positions are updated every 0.1\,s and
+the velocity is redrawn every 0.5\,s with memory parameter $\alpha=0.85$ around a mean speed $\bar v$. Every
+UAV is a Poisson traffic source of rate $\lambda$ packets per second towards a destination drawn uniformly
+among the other UAVs, with 1024-byte payloads. The MAC is CSMA/CA with acknowledgements at 2\,Mbit/s; after
+an ACK timeout the MAC calls the routing layer's \texttt{penalize} hook and resends, with at most five
+transmission attempts per hop. Packets expire 10\,s after creation. \Cref{fig:arch} shows the protocol stack
+and where our code attaches to it.
+
+\textbf{Radio range.} The physical layer uses free-space path loss with exponent 2, transmit power
+$P_t=0.1$\,W, noise power $N_0=4\times10^{-11}$\,W, carrier frequency $f_c=2.4$\,GHz and an SINR threshold
+$\gamma=6$\,dB. A frame sent over distance $d$ without interference is received if
+\begin{equation}
+  \mathrm{SNR}(d)=\frac{P_t}{N_0}\left(\frac{c}{4\pi f_c\, d}\right)^{2}\ge\gamma ,
+\end{equation}
+that is, if $d$ does not exceed
+\begin{equation}
+  \Rmax=\frac{c}{4\pi f_c}\sqrt{\frac{P_t}{N_0\,\gamma}}\approx 249.3\,\text{m}.
+  \label{eq:rmax}
+\end{equation}
+The channel has no fading, so~\eqref{eq:rmax} is exact: a link exists if and only if $d\le\Rmax$ and no
+interferer pushes the SINR below $\gamma$.
+
+\begin{figure}[t]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tikzpicture}[
+  layer/.style={draw, rounded corners=2pt, minimum width=3.4cm, minimum height=0.6cm, font=\footnotesize, align=center},
+  ours/.style={draw, rounded corners=2pt, minimum height=0.6cm, font=\footnotesize, fill=blue!8, text width=3.3cm, align=left},
+  arr/.style={-{Stealth[length=4pt]}, thick}]
+  \node[layer] (app) {Poisson traffic, $\lambda$ per UAV};
+  \node[layer, below=0.3cm of app] (net) {Routing layer};
+  \node[layer, below=0.3cm of net] (mac) {CSMA/CA MAC, $\le5$ attempts};
+  \node[layer, below=0.3cm of mac] (phy) {PHY: free space, SINR $\ge6$\,dB};
+  \node[layer, below=0.3cm of phy] (mob) {3-D Gauss--Markov mobility};
+  \node[ours, right=1.1cm of net] (leap) {LEAP-GR: Greedy + link lifetime $\taute$ (\ref{eq:let}); switch if $\taute<\tauth$};
+  \node[ours, right=1.1cm of phy] (rec) {Recorder (observe only): loss causes, recomputations};
+  \draw[arr] (app) -- (net);
+  \draw[arr] (net) -- (mac);
+  \draw[arr] (mac) -- (phy);
+  \draw[arr] (leap.west) -- node[above, font=\scriptsize]{next hop} (net.east);
+  \draw[arr, dashed] (mac.east) -- node[below, font=\scriptsize, pos=0.4]{\texttt{penalize}} ++(0.75,0) |- ([yshift=-0.15cm]leap.west);
+  \draw[arr, dotted] (phy.east) -- node[above, font=\scriptsize]{events} (rec.west);
+\end{tikzpicture}}
+\caption{Protocol stack of UavNetSim-v1 and our additions (shaded). LEAP-GR replaces the routing module;
+the MAC calls its \texttt{penalize} hook on every ACK timeout. The recorder only reads events.}
+\label{fig:arch}
+\end{figure}
+
+\subsection{Loss attribution}
+\label{sec:attribution}
+
+All drop paths of the platform are silent, so we added observe-only hooks that never consume random numbers
+(a golden test checks that results stay bit-identical to the unmodified simulator). For each failed
+unicast reception from $s$ to $r$ we recompute the SNR without interference at the current distance. If it is
+below $\gamma$, i.e.\ $d>\Rmax$, the failure is a \emph{link break}; otherwise it is a \emph{collision}. By
+\eqref{eq:rmax} the test is exact on this platform. Each lost packet then gets one final cause: link break
+(dropped after five attempts, the last one out of range), collision (last failure due to interference,
+including a lost ACK), no route (expired in the waiting list), queue overflow, TTL, expired (lifetime exceeded
+in a queue) or other. A conservation test checks that generated packets equal delivered plus lost plus those
+still in flight at the end of the run. We also count \emph{route recomputations}: routing decisions for a
+packet at a node after the first one (waiting-list retries, next-hop changes between MAC attempts, and route
+discoveries).
+
+\subsection{Link lifetime}
+\label{sec:let}
+
+LEAP-GR adds the sender's velocity $v_j$ and a timestamp $t_j$ to each hello message, which already carries
+its position $p_j$ (128 extra bits). At time $t$, node $i$ extrapolates neighbour $j$ to
+$\hat p_j=p_j+v_j\,(t-t_j)$ and forms $\Delta p=\hat p_j-p_i$ and $\Delta v=v_j-v_i$. The link lasts while
+$\lVert\Delta p+\Delta v\,\tau\rVert\le R$. Writing $a=\lVert\Delta v\rVert^2$, $b=\Delta p\cdot\Delta v$ and
+$c=\lVert\Delta p\rVert^2-R^2$, the remaining lifetime is the largest root of $a\tau^2+2b\tau+c=0$:
+\begin{equation}
+  \taute_{ij}=
+  \begin{cases}
+    0 & \text{if } c>0 \text{ (already out of range)},\\
+    +\infty & \text{if } a<\varepsilon \text{ (no relative motion)},\\
+    \dfrac{-b+\sqrt{b^2-ac}}{a} & \text{otherwise.}
+  \end{cases}
+  \label{eq:let}
+\end{equation}
+When $c\le0$, $b^2-ac\ge0$ and $\taute\ge0$, so the root always exists. This is the 3-D form of the link
+expiration time of~\cite{su2001mobility}, computed from the current distance, the relative velocity and the
+radio range. We use $R=\kappa\Rmax$ with $\kappa=0.9$, a margin for interference near the edge of range.
+Unlike the platform's OPAR predictor, \eqref{eq:let} handles the out-of-range and zero-relative-speed cases;
+on in-range cases the two agree (unit test). A neighbour whose last hello is older than the table lifetime
+(2\,s) has $\taute=0$.
+
+\subsection{LEAP-GR next-hop selection}
+\label{sec:leap}
+
+LEAP-GR is a subclass of the platform's Greedy forwarding. Hello period (0.5\,s), neighbour lifetime (2\,s),
+ACK handling and waiting list are Greedy's code, unchanged; only the hello content, the neighbour table,
+\texttt{next\_hop\_selection} and \texttt{penalize} are overridden. Progress towards destination $D$ is
+$\pi_j=\lVert p_i-p_D\rVert-\lVert p_j-p_D\rVert$, computed from hello positions exactly as Greedy does.
+\Cref{alg:leap} gives the rule: \emph{forward like Greedy unless Greedy's choice is predicted to break within
+$\tauth$}. The backup is a one-hop alternative re-evaluated for every packet at every hop, not an end-to-end
+backup path; in geographic routing this per-packet check is the anticipated backup search. A node never
+selects itself: the platform delivers a broadcast to the sender's own inbox too, so each node finds its own
+hello in its neighbour table.
+
+\begin{algorithm}[t]
+\caption{LEAP-GR at node $i$ for a packet to $D$.}
+\label{alg:leap}
+\footnotesize
+\begin{algorithmic}[1]
+\Function{NextHop}{$D$}
+  \State $g \gets \arg\max_{j\in\mathcal N_i,\ \pi_j>0} \pi_j$ \Comment{Greedy's choice}
+  \If{$g$ undefined} \Return none \Comment{waiting list, as Greedy}
+  \EndIf
+  \If{$\taute_{ig}\ge\tauth$ \textbf{or} ($g=D$ \textbf{and} $\taute_{ig}>0$)} \Return $g$
+  \EndIf
+  \State $\mathcal B \gets \{\,j\in\mathcal N_i\setminus\{g,i\} : \pi_j>0,\ \taute_{ij}\ge\tauth\,\}$
+  \If{$\mathcal B\neq\emptyset$} \Return $\arg\max_{j\in\mathcal B}\pi_j$ \Comment{proactive switch}
+  \EndIf
+  \State \Return $g$ \Comment{no safe neighbour: never worse than Greedy}
+\EndFunction
+\Statex
+\Function{Penalize}{packet} \Comment{called by the MAC on an ACK timeout}
+  \If{mode = predictive \textbf{and} $\taute_{i,\text{next}}<\tauth$} redirect retries to the best $j\in\mathcal B$
+  \ElsIf{mode = reactive} redirect retries to the best other neighbour
+  \EndIf
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Repair and variants.} The \texttt{penalize} hook lets the routing layer change the next hop of a
+packet before the MAC's next attempt, without touching the MAC. We compare four variants with the same MAC
+and parameters: Greedy (A0); LEAP-select (A1), the selection rule alone; LEAP-GR (A2), selection plus
+\emph{predictive} repair, which redirects retries only if the current next hop is predicted to break; and
+a reactive control (R), Greedy plus a switch to the best other neighbour after every ACK timeout, with no
+prediction. A1 versus A0 measures the gain of prediction in the routing decision, and A2 versus R compares
+predicting with reacting.
+
+\textbf{Cross-layer weighting (extension).} We also test weighting next hops by the recent MAC retransmission
+rate towards them. Each node keeps, per neighbour, $f_j\gets(1-\beta)f_j+\beta\,\mathbb 1[\text{ACK
+timeout}]$ with $\beta=0.2$ (updated by \texttt{penalize} on failure and by ACK reception on success) and ranks
+candidates by $\pi_j(1-f_j)$ instead of $\pi_j$. The MAC is only read.

@@ -1,0 +1,14 @@
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+
+\pending{Contributions with the final numbers; where prediction helps and where it does not; written last
+from the frozen results.}
+
+\textbf{Limits.} The study uses a free-space channel, Gauss--Markov mobility, 30\,s runs and three seeds per
+configuration; the predictor assumes that each UAV knows its own velocity and that destination positions are
+known, as for Greedy.
+
+\textbf{Future work.} Natural next steps are a predictor that tolerates noisy positions and fading (a Kalman
+filter, as in~\cite{cui2022tarraq}), coupling the prediction with the platform's virtual-force topology
+control to keep links alive rather than only avoiding dying ones, and an evaluation on a ray-traced urban
+channel.

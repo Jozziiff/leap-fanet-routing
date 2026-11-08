@@ -1,0 +1,49 @@
+\documentclass[conference]{IEEEtran}
+% Build: latexmk (see paper/README.md). Class and style files are vendored in paper/tex/.
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{algpseudocode}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit}
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalise,nameinlink]{cleveref}
+
+\floatstyle{ruled}
+\newfloat{algorithm}{t}{loa}
+\floatname{algorithm}{Algorithm}
+\crefname{algorithm}{Algorithm}{Algorithms}
+
+\graphicspath{{../figures/}}
+
+% Results that depend on the post-fix re-runs (DECISIONS D-018). Every \pending must be gone before release.
+\newcommand{\pending}[1]{\fcolorbox{red}{red!8}{\parbox{0.92\columnwidth}{\footnotesize\textbf{Pending re-run:} #1}}}
+
+\newcommand{\taute}{\hat{\tau}}
+\newcommand{\tauth}{\tau_{\mathrm{th}}}
+\newcommand{\Rmax}{R_{\max}}
+
+\begin{document}
+
+\title{Predicting Link Breaks in UAV Swarms:\\ A Loss Diagnosis and Link-Expiration-Aware Greedy Forwarding}
+
+\author{\IEEEauthorblockN{Youssef Hamdani and Rayen Hamza}
+\IEEEauthorblockA{National Institute of Applied Science and Technology (INSAT), Tunis, Tunisia}}
+
+\maketitle
+
+\input{sections/abstract}
+\input{sections/introduction}
+\input{sections/related}
+\input{sections/model}
+\input{sections/evaluation}
+\input{sections/conclusion}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
