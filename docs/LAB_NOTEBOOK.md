@@ -123,3 +123,52 @@ rest of the sweep (0.5–4 s) and the shadow runs will show. **For the article a
 the main "why". A natural reviewer question is whether simply shortening Greedy's 2-s neighbor lifetime would do
 the same; answer from data (tau_th sweep), and list "Greedy with a shorter neighbor timeout" as a further control
 if time allows.
+
+---
+
+## 2026-11-08 02:47 — Exp C complete: tau_th frozen at 0.25 s (pre-registered rule D-016)
+Source: `leap-dev/results/raw/exp_c_tuning/` (commit `694c7ef`, 18 runs, 0 failed), summary in
+`docs/tau_freeze.json`, frozen config `experiments/configs/exp_b_leap.yaml` (commit `b550e44`, written and
+pushed by `experiments/freeze_tau.py` without manual intervention). N = 30, 20 m/s, λ = 1, seeds 100–102.
+
+| tau_th (s) | 0.25 | 0.5 | 1 | 2 | 4 | Greedy |
+|---|---|---|---|---|---|---|
+| mean PDR | 0.9846 | 0.9809 | 0.9719 | 0.9329 | 0.8569 | 0.8036 |
+
+Per seed (s100 / s101 / s102): 0.25 s → 0.991 / 0.986 / 0.977; 0.5 s → 0.987 / 0.984 / 0.973; 1 s → 0.978 /
+0.978 / 0.959; Greedy → 0.817 / 0.801 / 0.793. Rule: smallest tau_th within 0.5 pp of the best mean ⇒ 0.25 s
+(it is also the best mean). **PDR decreases monotonically with tau_th**: a larger threshold rejects more links
+that would still have carried the packet, so LEAP switches to neighbours with less progress or finds none. For
+Q&A ("why not smaller than 0.25 s?"): the grid was fixed before the sweep; at 0.25 s the residual link-break
+losses are already 0–3 per run, so a smaller value can only win on the remaining ~1.5 % of losses, which are not
+link breaks. Also say plainly: at this threshold the gain is mostly stale-neighbour filtering (entry above).
+
+## 2026-11-08 — Exp C shadow mode: prediction quality (seed 100, Greedy behaviour unchanged)
+Source: `leap-dev/results/raw/exp_c_shadow/` (commit `694c7ef`, 5 runs). LEAP computes and logs warnings but
+always forwards like Greedy. Sanity check: PDR 0.8167 in all 5 runs, identical to Greedy seed 100.
+
+| Warning window (s) | 0.25 | 0.5 | 1 | 2 | 4 |
+|---|---|---|---|---|---|
+| precision (warned links that did break) | 0.398 | 0.441 | 0.492 | 0.548 | 0.562 |
+| recall (out-of-range attempts warned) | 680/680 | 680/680 | 680/680 | 680/680 | 680/680 |
+| mean lead time (s) | 0.013 | 0.052 | 0.150 | 0.351 | 0.770 |
+| median lead time (s) | 0.0044 | 0.0045 | 0.0046 | 0.0047 | 0.0048 |
+
+Reading: every transmission to an out-of-range receiver was predicted (recall 1.0 at every window), but the
+median lead time is ~4.5 ms, i.e. at decision time the link is predicted to be already broken: the same
+stale-neighbour effect. Long lead times exist (up to ~4 s at the 4-s window) but are a minority. About half the
+warnings are false alarms (link survived); this is the cost side of a larger tau_th and matches the PDR drop
+above. Goes in article §5 (prediction quality, R7) and in the Q&A defence of the mechanism.
+
+## 2026-11-08 05:17 — Exp B complete on the Windows PC (99 runs)
+Source: zip of `results/raw/exp_b_comparison/` from the Windows PC, extracted into
+`leap-work/results/raw/exp_b_comparison/`. 33 runs each of `greedy_reactive` (commit `d845f8c`), `leap_select`
+and `leap` (commit `b550e44`), all with clean trees, 11 configs × seeds 1–3. Python 3.12.16 on that machine
+(3.12.15 on the laptop). Greedy and GRAd baselines come from Exp A.
+
+## 2026-11-08 09:50 — Exp A: completing the Greedy baseline on the laptop
+Exp A shard 0 (laptop) finished at 08:00 (116 runs, 0 failed, 9.2 h). Shard 1 (Rayen's PC) not yet collected;
+it contains 18 of the 33 Greedy runs needed as the paired baseline of Exp B. These 18 runs are re-run on the
+laptop from the same frozen commit `dd71430` (same `run_one.py` arguments; subset config with only the `greedy`
+variant, kept in untracked `notes/`). When Rayen's shard arrives, the overlap is a cross-machine reproducibility
+check: the simulator is deterministic for a given seed and commit (golden test T4), so the files must match.
