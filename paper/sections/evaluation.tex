@@ -151,11 +151,13 @@ density grows, and LEAP-GR's advantage over it reaches 47 to 87 points.
 \centering
 \includegraphics[width=\columnwidth]{fig5_cost}
 \caption{Cost versus mean speed ($N=30$, $\lambda=1$, 3 seeds): mean end-to-end delay of delivered packets
-(log scale) and control traffic per delivered packet.}
+(log scale) and normalised routing load in bits (control traffic per delivered packet).}
 \label{fig:cost}
 \end{figure}
 
-The price of prediction is small (\cref{fig:cost}). Hellos grow by 128 bits, and LEAP-GR's control traffic per
+The price of prediction is small (\cref{fig:cost}). We measure the normalised routing load (NRL) as control
+traffic per delivered packet, counted in bits rather than in packets as the platform's NRL does, because
+LEAP-GR's hellos are larger. Hellos grow by 128 bits, and LEAP-GR's control traffic per
 delivered packet is at most 0.3\,kbit above Greedy's 2.0--2.2\,kbit, because it delivers more packets
 with the same hello rate. Paths are longer, 2.0--2.1 hops against 1.7--1.8 for Greedy, since a neighbour that is
 predicted to stay is usually closer, so it makes less progress. Mean delay changes little at $\lambda=1$
