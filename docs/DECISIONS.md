@@ -316,3 +316,23 @@ Status values: **accepted** (in force), **superseded by D-xxx**, **revisit at <g
 - **Defence:** "The main comparison was fixed in advance; this extra variant tests one explanation of a result
   we observed, and we label it as a post-hoc check."
 - **Status:** accepted; laptop, from the frozen worktree `leap-dev`.
+
+## D-018 — LEAP self-selection bug: fix and redo every LEAP-based run
+- **Date / phase:** 2026-11-08 11:30, P3. **Serves:** correctness of R5–R9.
+- **Finding:** LEAP left 15–27 packets per run undelivered and not dropped at N = 30, λ = 1 (Greedy: 0). Event logs
+  (`exp_b_comparison/leap/n30_v5_r1_s1`) show `PROACTIVE_SWITCH` from node 9 to node 9: the packet is sent to the
+  node itself and lost. Cause: a broadcast reaches the sender's own inbox (M40), so each node is in its own
+  neighbor table with the position of its last hello; `Leap.best_alternative` did not skip the node's own id,
+  and that stale entry can look like a safe neighbor with progress. Across Exp B: 586 self-decisions out of
+  17 929 LEAP switches and repairs (34 444 packets generated); 129 of 5 097 repairs of the reactive control
+  (same function). Greedy and GRAd do not use this code; Greedy's own choice is immune (M40).
+- **Decision:** skip the node's own id in `best_alternative` (one line, regression test
+  `test_never_picks_itself_from_its_own_hello`), then redo, from the fixed commit, every run that executes LEAP
+  code: Exp C's 15 LEAP tuning runs (Greedy and the shadow runs make no switch and are kept), re-freeze tau_th
+  with the **unchanged** rule D-016, then Exp B (reactive control, LEAP-select, LEAP), Exp D and Exp E. Old
+  results are kept aside as superseded, not deleted, and never reported.
+- **Rejected:** correcting the old results by removing the lost packets (not what the protocol does); keeping
+  tau_th = 0.25 s without re-tuning (it was chosen with the buggy code).
+- **Defence:** "We found the bug ourselves from the event logs (packets in flight at the end), traced it to a
+  simulator behaviour we then documented, fixed it with a regression test and re-ran everything it touched."
+- **Status:** accepted.

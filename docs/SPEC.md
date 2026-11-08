@@ -548,6 +548,7 @@ At each checkpoint, re-read the requirement → compare with what was built → 
 | **Before release** | Fresh clone on the other laptop → README quickstart → `make test` → `make figures` reproduces the figures. |
 
 ## 17. Changelog
+- **v1.6 (2026-11-08):** new fact M40 (a broadcast reaches the sender's own inbox, so each node is in its own neighbor table). It caused a LEAP bug (packets switched to the node itself); fixed, and every LEAP-based run is redone (DECISIONS D-018). tau_th re-frozen with the unchanged rule D-016.
 - **v1.5 (2026-11-07):** Phase 1 instrumentation implemented (P1–P7, recorder, runner, sweep, tests T2 and T4–T8; T4 golden test passed). Corrected §5.2: OPAR has no relay re-planning (M36). New facts M35–M38. Recorder method in D-011.
 - **v1.4 (2026-11-07):** defense version uses 3 seeds everywhere (D-009); 5-seed Exp B after the defense. Priority order core → B1 → animation → B2 (if time); B3 after the defense (D-010).
 - **v1.3 (2026-11-07):** seed plan decided at G0: tiered 3/5 kept (D-004). Added `docs/DECISIONS.md` (decision log with alternatives, reasons and Q&A defence; D-001 to D-007) and `docs/LAB_NOTEBOOK.md` (dated run records with every number and its source file), to feed the article, README and oral.
