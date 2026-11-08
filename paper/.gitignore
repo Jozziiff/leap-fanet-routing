@@ -1,2 +1,12 @@
 build/
 build.log
+# LaTeX outputs when built in place (editor builds); the PDF ships as a release asset
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+main.pdf
