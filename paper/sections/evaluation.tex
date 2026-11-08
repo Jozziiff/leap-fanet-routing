@@ -61,8 +61,8 @@ unicast protocols (GRAd broadcasts and has no link-break losses by construction)
 \label{fig:losses}
 \end{figure*}
 
-\Cref{fig:losses}a breaks down the losses of the seven protocols at the reference point. Two results stand
-out. First, \emph{collisions are almost never the final cause of a loss}: at most 0.09\,\% of generated packets
+\Cref{fig:losses}a breaks down the losses of the seven protocols at the reference point.
+\emph{Collisions are almost never the final cause of a loss}: at most 0.09\,\% of generated packets
 for the unicast protocols (0.42\,\% for GRAd, which has no retransmissions), against 9.8\,\% lost to link breaks for Greedy. A collision costs one MAC attempt, and the
 next attempt usually succeeds, so the five-attempt budget absorbs collisions. A link break does not go away
 between attempts: the MAC resends the same frame to a neighbour that has left, five times, and drops it. Of
@@ -71,7 +71,7 @@ protocol. Even at $\lambda=5$, where the channel saturates, collision losses sta
 congestion then shows up as packets that expire in queues (8.2\,\% of Greedy's packets) and as packets
 without a route, not as collisions.
 
-Second, the protocols fail in different ways. Link breaks cause 83\,\% of Greedy's losses. DSDV loses
+The protocols fail in different ways. Link breaks cause 83\,\% of Greedy's losses. DSDV loses
 44\,\% of its packets for lack of a route: its tables lag behind the topology. GRAd loses packets to queue
 overflow (24.5\,\%) and to missing routes (14.7\,\%), because every relay rebroadcasts. Q-Routing's delivered packets
 travel 6.6 hops on average against 1.8 for Greedy, and 40\,\% of its packets expire: its learned estimates
@@ -94,7 +94,7 @@ while the 2\,s neighbour lifetime keeps departed neighbours in the table.
 packet at the reference point, mostly route-request broadcasts (0.84 per delivered packet) plus
 waiting-list retries (0.38).
 Greedy recomputes 0.19 times per delivered packet, all of them waiting-list retries. Greedy's MAC retries
-are not recomputations: they go to the same neighbour. That is the gap LEAP-GR targets: Greedy keeps no
+are not recomputations: they go to the same neighbour. LEAP-GR targets this weakness: Greedy keeps no
 alternative when a link fails, and its retries are spent on a neighbour that has already left.
 
 \subsection{Choice of the threshold}
@@ -118,7 +118,7 @@ switches per delivered packet rise from 0.70 to 0.97 (centre) and paths lengthen
 
 The shadow-mode runs explain why a small threshold is enough. Every one of Greedy's 680 transmissions to an
 out-of-range receiver was preceded by a warning (recall 1.0 at every window), but the median warning came
-only 4.4--4.8\,ms before the failed transmission. Indeed, 98.4\,\% of LEAP-GR's proactive switches at
+only 4.4--4.8\,ms before the failed transmission, and 98.4\,\% of LEAP-GR's proactive switches at
 $\tauth=0.25$\,s happen when the chosen neighbour's extrapolated position is already beyond $0.9\Rmax$
 ($\taute=0$). Greedy keeps a neighbour for 2\,s after its last hello; at 20\,m/s two UAVs flying apart can separate by up to
 80\,m in that time, and the neighbour closest to the destination is often one that has already left. Most of
@@ -238,9 +238,7 @@ significantly in any configuration ($+0.05$ to $+0.19$ points at $\lambda=1$, $-
 $\lambda=1$ LEAP-GR suffers about 45 ACK timeouts per run, too few for the moving averages to move away from
 zero and change a ranking. At $\lambda=5$ the weighting does what it is designed to do, cutting ACK timeouts
 from 274 to 239 per run ($p=0.009$), but those retransmissions were not where packets were lost: losses at
-this load are queue expiries and missing routes. Avoiding unreliable neighbours cannot fix a saturated
-channel.
-
+this load are queue expiries and missing routes.
 \subsection{Threats to validity}
 
 The channel is free space without fading, which makes link breaks exact and predictable from distance; a

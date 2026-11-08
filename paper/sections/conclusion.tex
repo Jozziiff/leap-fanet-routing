@@ -8,8 +8,7 @@ Greedy forwarding and grow with speed, from 4.1\,\% to 16.0\,\% of generated pac
 
 LEAP-GR forwards like Greedy unless the chosen link is predicted to expire within $\tauth=0.25$\,s. With the
 same MAC and seeds it delivers up to 14.7 points more than Greedy and up to 87 points more than GRAd, for
-128 bits per hello and 0.2--0.3 more hops per packet. The ablation shows what the prediction itself is worth:
-against a control that switches neighbour after every failed attempt, LEAP-GR gains 0.9 to 3.0 points
+128 bits per hello and 0.2--0.3 more hops per packet. Against a control that switches neighbour after every failed attempt, LEAP-GR gains 0.9 to 3.0 points
 at 15--20\,m/s and at $N=40$--50, where breaks are frequent and safe alternatives exist, and loses at 5\,m/s
 and under saturation, where its longer paths cost more than the breaks it avoids. The mechanism is mostly
 short-horizon: 98.4\,\% of its switches avoid a neighbour that, extrapolated from its last hello, has already
@@ -20,7 +19,7 @@ their recent retransmission rate lowers retransmissions without improving delive
 configuration; the predictor assumes that each UAV knows its own velocity and that destination positions are
 known, as for Greedy.
 
-\textbf{Future work.} Natural next steps are a predictor that tolerates noisy positions and fading (a Kalman
+\textbf{Future work.} Next steps include a predictor that tolerates noisy positions and fading (a Kalman
 filter, as in~\cite{cui2022tarraq}), coupling the prediction with the platform's virtual-force topology
 control to keep links alive rather than only avoiding dying ones, and an evaluation on a ray-traced urban
 channel.

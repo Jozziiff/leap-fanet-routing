@@ -33,10 +33,9 @@ unmanned robotic networks, and Q-FANET~\cite{dacosta2021qfanet} refines it for F
 protocols react to observed outcomes. They need feedback before they adapt, and they do not explain why a
 packet was lost.
 
-\textbf{Gap.} Two things are missing for a fair judgement of prediction. The first is a measurement of how
-many losses are actually link breaks, separated from collisions and queueing. The second is a comparison
-that holds everything else fixed, including the MAC and the reaction to failures, so that the gain of
-prediction is isolated. This paper provides both, with a distributed predictor that uses only information
+\textbf{Gap.} Judging prediction fairly requires a measurement of how many losses are link breaks, separated
+from collisions and queueing, and a comparison that holds everything else fixed, including the MAC and the
+reaction to failures. This paper provides both, with a distributed predictor that uses only information
 carried in hello messages.
 
 \begin{table*}[t]

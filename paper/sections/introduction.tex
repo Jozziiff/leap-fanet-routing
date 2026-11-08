@@ -8,9 +8,8 @@ the radio link between two neighbours often lasts only a few seconds. Most routi
 broken link only after the fact, when a transmission fails or a neighbour timer expires. By then the packet
 in transit has already been lost or delayed, and the route must be rebuilt~\cite{khan2020survey}.
 
-Geographic forwarding shows the problem clearly. Greedy forwarding~\cite{karp2000gpsr} sends each packet to
-the neighbour closest to the destination. That neighbour is usually near the edge of radio range, which is
-exactly the link most likely to break next. On UavNetSim-v1~\cite{zhou2025uavnetsim,zhou2026repo}, the
+Greedy forwarding~\cite{karp2000gpsr} sends each packet to the neighbour closest to the destination. That
+neighbour is usually near the edge of radio range, so its link is the one most likely to break next. On UavNetSim-v1~\cite{zhou2025uavnetsim,zhou2026repo}, the
 platform used in this work, the medium access control (MAC) layer then retries the same neighbour up to
 five times before dropping the packet, and a neighbour stays in the table for up to 2\,s after its
 last hello message.
@@ -18,9 +17,9 @@ last hello message.
 This paper asks two questions. First, how many packets do the existing FANET routing protocols actually
 lose because a link breaks, rather than because of a MAC collision or another cause? Second, can a node
 that predicts the remaining lifetime of each link avoid those losses, and how much of the gain comes from
-the prediction itself rather than from simply reacting faster?
+the prediction itself rather than from reacting faster?
 
-Link-lifetime prediction is not new. The link expiration time (LET) of Su~\emph{et~al.}~\cite{su2001mobility}
+Link-lifetime prediction has been studied before. The link expiration time (LET) of Su~\emph{et~al.}~\cite{su2001mobility}
 predicts when two nodes moving at constant velocity leave each other's range, and OPAR~\cite{gharib2021opar}
 uses it in a centralised route computation. Learning-based protocols such as QGeo~\cite{jung2017qgeo},
 Q-FANET~\cite{dacosta2021qfanet} and TARRAQ~\cite{cui2022tarraq} adapt routes from observed delivery outcomes.
