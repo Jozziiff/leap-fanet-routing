@@ -33,6 +33,9 @@ STYLE = {
     "q_routing": ("Q-Routing", "#008300", "P", "--"),
     "qgeo": ("QGeo", "#6250d6", "X", "-."),
     "qfanet": ("Q-FANET", "#e34948", "*", ":"),
+    # Exp B controls: neutral ink, not a ninth hue (they are variants of LEAP, not new protocols)
+    "greedy_reactive": ("Reactive repair (control)", "#52514e", ">", ":"),
+    "leap_select": ("LEAP-select (A1)", "#2a78d6", "o", ":"),
 }
 DIAGNOSTIC_ORDER = ["dsdv", "greedy", "grad", "opar", "q_routing", "qgeo", "qfanet"]
 CAUSE_GROUPS = [  # greyscale + hatching: causes never reuse protocol colours
@@ -50,7 +53,7 @@ REF = {"n": 30, "speed": 10.0, "rate": 1.0}
 SWEEPS = [
     ("n", "Number of UAVs $N$", {"speed": 10.0, "rate": 1.0}),
     ("speed", "Mean speed (m/s)", {"n": 30, "rate": 1.0}),
-    ("rate", r"Poisson rate $\lambda$ (packets/s per UAV)", {"n": 30, "speed": 10.0}),
+    ("rate", r"$\lambda$ (packets/s per UAV)", {"n": 30, "speed": 10.0}),
 ]
 SINGLE, DOUBLE = 3.5, 7.16  # IEEE column widths (in)
 
@@ -137,11 +140,16 @@ def fig_loss_causes(a: pd.DataFrame, out: Path) -> None:
     ax1.set_xticks(range(len(labels)), [STYLE[p][0] for p in labels], rotation=30, ha="right")
     ax1.set_ylabel("Lost packets (% of generated)")
     ax1.set_title(r"(a) Loss causes, $N$=30, 10 m/s, $\lambda$=1")
-    ax1.legend(frameon=False, ncol=2)
-    line_panel(ax2, a, labels, "speed", {"n": 30, "rate": 1.0}, "lbr_vs_collision", 100)
+    ax1.set_ylim(0, 1.3 * max(bottoms))
+    ax1.legend(frameon=False, ncol=2, loc="upper left")
+    # GRAd forwards by broadcast without a chosen next hop, so it has no link-break losses by construction
+    unicast = [p for p in labels if p != "grad"]
+    line_panel(ax2, a, unicast, "speed", {"n": 30, "rate": 1.0}, "loss_link_break_per_generated", 100)
+    ax2.set_ylim(bottom=0)
+    ax2.set_xticks([5, 10, 15, 20])
     ax2.set_xlabel("Mean speed (m/s)")
-    ax2.set_ylabel("Link breaks / (link breaks + collisions) (%)")
-    ax2.set_title("(b) Link-break share vs speed")
+    ax2.set_ylabel("Lost to link breaks (% of generated)")
+    ax2.set_title(r"(b) Link-break losses vs speed, $N$=30, $\lambda$=1")
     ax2.legend(frameon=False, ncol=2)
     save(fig, out, "fig2_loss_causes")
 
@@ -153,7 +161,8 @@ def fig_recomputations(a: pd.DataFrame, out: Path) -> None:
     for ax, (var, xlabel, fixed) in zip(axes, SWEEPS[:2]):
         line_panel(ax, a, labels, var, fixed, "rr")
         ax.set_xlabel(xlabel)
-    axes[0].set_ylabel("Recomputations per delivered packet")
+    axes[1].set_xticks([5, 10, 15, 20])
+    axes[0].set_ylabel("Recomputations / delivered")
     axes[1].legend(frameon=False, ncol=2)
     save(fig, out, "fig3_recomputations")
 
@@ -161,7 +170,7 @@ def fig_recomputations(a: pd.DataFrame, out: Path) -> None:
 def fig_comparison(
     ab: pd.DataFrame,
     out: Path,
-    labels=("greedy", "grad", "leap"),
+    labels=("greedy", "grad", "greedy_reactive", "leap"),
     metric="pdr",
     ylabel="Packet delivery ratio (%)",
     name="fig4_pdr",
@@ -172,21 +181,27 @@ def fig_comparison(
     for ax, (var, xlabel, fixed) in zip(axes, SWEEPS):
         line_panel(ax, ab, list(labels), var, fixed, metric, scale)
         ax.set_xlabel(xlabel)
+    if metric == "pdr":
+        axes[0].set_ylim(0, 105)
     axes[0].set_ylabel(ylabel)
-    axes[2].legend(frameon=False)
+    handles, names = axes[0].get_legend_handles_labels()
+    fig.legend(handles, names, frameon=False, ncol=len(names), loc="upper center", bbox_to_anchor=(0.5, 1.08))
     save(fig, out, name)
 
 
-def fig_cost(ab: pd.DataFrame, out: Path, labels=("greedy", "grad", "leap")) -> None:
+def fig_cost(ab: pd.DataFrame, out: Path, labels=("greedy", "grad", "greedy_reactive", "leap")) -> None:
     """Fig. 5: end-to-end delay and control overhead (bits per delivered packet) vs speed."""
     ab = ab.assign(ctrl_kbit_per_delivered=ab["control_tx_bits"] / ab["delivered"] / 1e3)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(DOUBLE, 2.3))
     line_panel(ax1, ab, list(labels), "speed", {"n": 30, "rate": 1.0}, "delay_mean_ms")
-    ax1.set_ylabel("Mean end-to-end delay (ms)")
+    ax1.set_ylabel("Mean delay, delivered (ms)")
     line_panel(ax2, ab, list(labels), "speed", {"n": 30, "rate": 1.0}, "ctrl_kbit_per_delivered")
-    ax2.set_ylabel("Control traffic (kbit per delivered packet)")
+    ax2.set_ylabel("Control kbit / delivered")
     for ax in (ax1, ax2):
         ax.set_xlabel("Mean speed (m/s)")
+        ax.set_xticks([5, 10, 15, 20])
+    ax1.set_yscale("log")  # GRAd's delay is an order of magnitude above the unicast protocols
+    ax2.set_ylim(bottom=0)
     ax2.legend(frameon=False)
     save(fig, out, "fig5_cost")
 
@@ -228,7 +243,7 @@ def fig_tau(c: pd.DataFrame, out: Path) -> None:
     leap["tau"] = leap["label"].str.replace("leap_tau", "").astype(float)
     shadow = c[c["label"].str.startswith("shadow_w")].copy()
     shadow["tau"] = shadow["label"].str.replace("shadow_w", "").astype(float)
-    fig, axes = plt.subplots(1, 3, figsize=(DOUBLE, 2.3))
+    fig, axes = plt.subplots(1, 3, figsize=(DOUBLE, 2.3), gridspec_kw={"wspace": 0.45})
     s = summarize(leap, "pdr", by=["tau"]).sort_values("tau")
     axes[0].errorbar(
         s["tau"],
@@ -250,7 +265,7 @@ def fig_tau(c: pd.DataFrame, out: Path) -> None:
         axes[1].errorbar(
             s["tau"], s["mean"], yerr=s["ci"].fillna(0), color=STYLE["leap"][1], marker="o", capsize=2
         )
-    axes[1].set_ylabel("Proactive switches per delivered packet")
+    axes[1].set_ylabel("Proactive switches / delivered")
     if not shadow.empty:
         sh = shadow.sort_values("tau")
         axes[2].plot(sh["tau"], 100 * sh["pred_precision"], color="#52514e", marker="o", label="Precision")
@@ -258,9 +273,12 @@ def fig_tau(c: pd.DataFrame, out: Path) -> None:
             sh["tau"], 100 * sh["pred_recall"], color="#52514e", marker="s", linestyle="--", label="Recall"
         )
         axes[2].legend(frameon=False)
-    axes[2].set_ylabel("Warnings (%)")
+        axes[2].set_ylim(0, 105)
+    axes[2].set_ylabel("Shadow-mode warnings (%)")
     for ax in axes:
         ax.set_xscale("log", base=2)
+        ax.set_xticks([0.25, 0.5, 1, 2, 4], ["0.25", "0.5", "1", "2", "4"])
+        ax.minorticks_off()
         ax.set_xlabel(r"Threshold $\tau_{th}$ (s)")
     save(fig, out, "fig7_tau")
 
@@ -287,6 +305,18 @@ def main() -> None:
         res = fig_ablation(ab, a.out, {"n": 30, "speed": 20.0, "rate": 1.0})
         if not res.empty:
             res.to_csv(a.out / "table_ablation.csv", index=False)
+        table = [
+            paired(ab, metric, base, other)
+            for base, other in [
+                ("greedy", "leap"),
+                ("greedy", "greedy_reactive"),
+                ("greedy_reactive", "leap"),
+                ("leap_select", "leap"),
+                ("grad", "leap"),
+            ]
+            for metric in ("pdr", "delay_mean_ms")
+        ]
+        pd.concat(table).to_csv(a.out / "table_paired.csv", index=False)
     if a.exp_c:
         fig_tau(pd.read_csv(a.exp_c), a.out)
 
