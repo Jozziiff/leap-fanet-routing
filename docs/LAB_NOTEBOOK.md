@@ -212,3 +212,22 @@ Source: `results/exp_b.csv` + `results/exp_a.csv` (Greedy, GRAd), table `figures
 5. LEAP vs GRAd: +47 to +87 pp where significant (9 of 11). GRAd pays with delays above 2 s and 4–6× more
    control traffic per delivered packet (Fig. 5). Delay and control overhead of LEAP ≈ Greedy.
 Goes to article §5 (results, "explain why") and is the core of the oral's results slide.
+
+## 2026-11-08 11:30 — LEAP self-selection bug found; LEAP-based results superseded (D-018)
+**All LEAP, LEAP-select, reactive-control, LEAP+XL and Exp C LEAP numbers above this entry are superseded** and
+must not be reported; the paired table of the 10:45 entry is kept only as a record of what led to the bug.
+How it was found: LEAP left packets neither delivered nor dropped at the end of every run (N = 30, λ = 1:
+27.0 / 20.7 / 14.7 per run at 5 / 10 / 20 m/s; Greedy 0.0), although traffic stops 3 s before the end and the
+mean delay is ~12 ms at 5 m/s. Event trace of packet 330 (`leap/n30_v5_r1_s1`): node 9 logs
+`PROACTIVE_SWITCH` to node 9, transmits to itself, and the packet disappears. Count over Exp B: 586 self-decisions
+in 17 929 LEAP switches and repairs; 129 in 5 097 repairs of the reactive control. Cause M40, fix `2327be4`.
+Old files: `leap-work/results/raw/_superseded_selfbug/`, `leap-dev/results/raw/_superseded_selfbug/`.
+
+Exp D (superseded run, commit `1016302`, 15 runs) is still informative about the mechanism, which the bug does
+not touch: at λ = 1 LEAP+XL produced runs identical to LEAP in 3 of 4 speeds, because there are only 7–11 ACK
+timeouts per run, so the moving average stays near 0 and never changes the ranking. Only λ = 5 (294 timeouts
+per run) gives XL something to react to. To be confirmed on the re-run.
+
+Re-run plan (11:35): Exp C LEAP runs on the laptop from `e1dbd01` (frozen worktree `leap-dev`), then tau_th
+re-frozen by D-016; reactive control re-run on the Windows PC in parallel (does not depend on tau_th); then
+Exp B LEAP-select + LEAP split between the Windows PC and Rayen's PC, Exp D and Exp E on the laptop.
