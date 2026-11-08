@@ -126,8 +126,9 @@ class Leap(Greedy):
         neighbors predicted to stay in range for at least ``tau_th_s``. Ties: first in table order (as Greedy).
         """
         best_id, best_progress = None, 0.0
+        me = self.my_drone.identifier  # the table holds the node's own hello (phy/channel.py:40-42)
         for j in self.neighbor_table.table:
-            if j in exclude or not self._is_valid(j):
+            if j == me or j in exclude or not self._is_valid(j):
                 continue
             progress = self.score(j, dst_drone)
             if progress <= best_progress:

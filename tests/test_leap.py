@@ -211,3 +211,16 @@ def test_cross_layer_weighting_prefers_reliable_neighbor():
     assert leap.best_alternative(DST, set(), require_safe=False) == 1
     leap.xl, leap.retx_rate = True, {1: 0.5}
     assert leap.best_alternative(DST, set(), require_safe=False) == 2
+
+
+def test_never_picks_itself_from_its_own_hello():
+    """A broadcast reaches the sender's own inbox (phy/channel.py:40-42), so a node stores its own hello.
+
+    With a stale position ahead of its current one, that entry looks like a safe neighbor with progress;
+    choosing it sends the packet to the node itself, where it is lost (found in Exp B event logs).
+    """
+    leap = FakeLeap(1.0, {0: ((150, 0, 50), (0, 0, 0)), 2: ((100, 0, 50), (0, 0, 0))})
+    assert leap.best_alternative(DST, set(), require_safe=True) == 2
+    assert leap.best_alternative(DST, set(), require_safe=False) == 2
+    alone = FakeLeap(1.0, {0: ((150, 0, 50), (0, 0, 0))})
+    assert alone.best_alternative(DST, set(), require_safe=True) is None
