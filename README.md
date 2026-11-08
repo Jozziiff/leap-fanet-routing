@@ -25,7 +25,12 @@ At the reference point (30 UAVs, 10 m/s, 1 packet/s per UAV, 3 seeds):
   either link breaks or collisions.
 - Link breaks cost Greedy 9.8 % of its packets (83 % of its losses), rising from 4.1 % at 5 m/s to 16.0 % at
   20 m/s.
-- LEAP-GR versus Greedy, GRAd and the reactive control: *pending the final runs*.
+- LEAP-GR (threshold 0.25 s) delivers more than Greedy in 9 of 11 configurations (paired, 95 % CI), by up
+  to 14.7 points: 98.7 % against 84.0 % at 20 m/s. GRAd delivers 13–42 % from 30 UAVs up.
+- Against a reactive control that switches neighbour after every failed attempt, prediction gains 0.9 to
+  3.0 points at 15–20 m/s and 40–50 UAVs, and loses at 5 m/s (−0.65) and at saturation (−4.9).
+- 98.4 % of LEAP-GR's switches avoid a neighbour that has, by its last hello, already left range but is still
+  in Greedy's 2-s neighbour table: most of the gain is not trusting stale neighbours.
 
 Figures: [`figures/`](figures/). Article: [`paper/`](paper/).
 
