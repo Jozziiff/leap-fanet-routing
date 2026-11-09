@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install (Python 3.12, locked dependencies)
+        run: uv sync --locked
+      - name: Lint
+        run: make lint
+      - name: Tests
+        run: make test
+      - name: Smoke simulation
+        run: make smoke
+      - name: Tables reproduce from the committed results
+        run: |
+          make figures
+          git diff --exit-code -- figures/table_ablation.csv figures/table_paired.csv

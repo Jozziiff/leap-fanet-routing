@@ -1,0 +1,20 @@
+# Install once with `uvx pre-commit install`. Hooks only touch our own files: upstream files are never
+# reformatted (SPEC §18.2, PATCHES.md), and vendored files keep their original bytes.
+files: ^(analysis|docs|experiments|instrumentation|routing/leap|tests|slides|paper/sections|\.github)/|^(routing/registry\.py|README\.md|PATCHES\.md|CHANGELOG\.md|CITATION\.cff|Makefile|pyproject\.toml)$
+exclude: ^slides/assets/(vendor/|replay-data\.js|demo\.cast)|^docs/media/
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff
+        entry: uv run ruff check
+        language: system
+        types: [python]
