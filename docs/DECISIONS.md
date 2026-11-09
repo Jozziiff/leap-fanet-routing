@@ -131,8 +131,8 @@ Status values: **accepted** (in force), **superseded by D-xxx**, **revisit at <g
   2. **Visibility:** private until the defense (Mon 2026-11-09), then public with release `v1.0.0`.
   3. **What is tracked:** upstream code, our code, `docs/` (SPEC, UPSTREAM_FACTS, DECISIONS, LAB_NOTEBOOK),
      `PATCHES.md`, Phase-0 tooling and evidence. Not tracked: virtual environment, caches, raw results, personal
-     notes (`notes/`) and local tool settings. The assistant rules file `CLAUDE.md` was first kept untracked,
-     then tracked on 2026-11-07 at the team's request so both teammates work from the same rules.
+     notes (`notes/`), local tool settings and the team's local working-rules file (tracked from 2026-11-07
+     to share it between the two machines, untracked again on 2026-11-09 before the public release).
   4. **Commit authorship:** commits carry the author's name only, no co-author trailers.
   5. **History layout:** commit 1 = upstream `v1.0.1` unmodified (tree hash checked against the tag); commit 2
      removes the IDE and bytecode files shipped upstream (M33); then our files in small Conventional Commits.
