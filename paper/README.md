@@ -6,5 +6,3 @@ Build: `latexmk` (configuration in `latexmkrc`, output in `build/`).
 
 `tex/` vendors `IEEEtran.cls` and `IEEEtran.bst` (IEEEtran V1.8b, LPPL) and `algorithmicx.sty` /
 `algpseudocode.sty` (algorithmicx, LPPL) from CTAN, because they are not part of every TeX installation.
-
-Red "Pending re-run" boxes mark results that are filled in only from the final result files.
