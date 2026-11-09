@@ -1,139 +1,154 @@
-# LEAP-GR: predicting link breaks in UAV swarms
+<h1 align="center">LEAP-GR</h1>
 
-Where do routing protocols for flying ad hoc networks (FANETs) lose their packets, and can a node that
-predicts how long each radio link will last avoid those losses? This repository answers both questions on
-the [UavNetSim-v1](https://github.com/Zihao-Felix-Zhou/UavNetSim-v1) simulator (tag `v1.0.1`).
+<p align="center"><b>Predicting link breaks in UAV swarms</b><br>
+Greedy geographic routing that changes next hop <i>before</i> the radio link fails.</p>
 
-- **Diagnosis.** An exact loss attribution for seven existing protocols (DSDV, Greedy, GRAd, OPAR,
-  Q-Routing, QGeo, Q-FANET): each failed reception is classified as a link break (receiver out of range) or
-  a collision (interference).
-- **LEAP-GR** (Link-Expiration-Aware Predictive Greedy Routing), a new module in
-  [`routing/leap/`](routing/leap/). It forwards exactly like Greedy unless Greedy's chosen neighbour is
-  predicted to leave radio range within a threshold, in which case it switches to a neighbour predicted to
-  stay.
-- **A paired comparison** with Greedy, GRAd and a reactive control, using the same MAC, the same seeds and
-  the same trajectories, which isolates the gain due to prediction.
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.12-1d5bd8?style=flat-square" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/simulator-UavNetSim%20v1.0.1-111111?style=flat-square" alt="UavNetSim v1.0.1">
+  <img src="https://img.shields.io/badge/tests-pytest-111111?style=flat-square" alt="tests: pytest">
+  <img src="https://img.shields.io/badge/lint-ruff-111111?style=flat-square" alt="lint: ruff">
+</p>
 
-Project 06 of the *Futurs Réseaux Mobiles* course, RT5, INSAT, 2026/2027.
+<p align="center">
+  <img src="docs/media/replay.gif" width="100%" alt="Replay of one packet in the demo run. Greedy sends it to a drone that has already left range and loses it after five attempts; LEAP-GR, on the same seed, switches to another neighbour and delivers it.">
+</p>
 
-## Key findings
+<p align="center"><i>One packet, two recorded runs, same seed. Greedy (left) sends it to drone 4, which has
+already left range, and loses it. LEAP-GR (right) sees the dead link and switches to drone 5.</i></p>
 
-At the reference point (30 UAVs, 10 m/s, 1 packet/s per UAV, 3 seeds):
+## The idea
 
-- **Collisions are almost never the final cause of a loss** (at most 0.09 % of generated packets for the
-  unicast protocols): the MAC's five attempts absorb them. Link breaks are 99–100 % of the losses that are
-  either link breaks or collisions.
-- Link breaks cost Greedy 9.8 % of its packets (83 % of its losses), rising from 4.1 % at 5 m/s to 16.0 % at
-  20 m/s.
-- LEAP-GR (threshold 0.25 s) delivers more than Greedy in 9 of 11 configurations (paired, 95 % CI), by up
-  to 14.7 points: 98.7 % against 84.0 % at 20 m/s. GRAd delivers 13–42 % from 30 UAVs up.
-- Against a reactive control that switches neighbour after every failed attempt, prediction gains 0.9 to
-  3.0 points at 15–20 m/s and 40–50 UAVs, and loses at 5 m/s (−0.65) and at saturation (−4.9).
-- 98.4 % of LEAP-GR's switches avoid a neighbour that has, by its last hello, already left range but is still
-  in Greedy's 2-s neighbour table: most of the gain is not trusting stale neighbours.
+In a swarm of drones, neighbours fly out of range all the time. Greedy forwarding sends each packet to the
+neighbour closest to the destination, and that neighbour is often the one about to leave. We first measured
+exactly why seven existing FANET protocols lose packets, then built a protocol around what we found.
 
-Figures: [`figures/`](figures/). Article: [`paper/`](paper/).
+The diagnosis classifies every failed reception as a link break (receiver out of range) or a collision.
+Since the MAC retries five times, collisions almost never cost a packet in the end, while link breaks cause
+most of the losses.
+
+LEAP-GR (Link-Expiration-Aware Predictive Greedy Routing) targets those breaks. Each node extrapolates its
+neighbours' positions from their hello messages and estimates how long each link will last. If Greedy's pick
+is about to break, it forwards to a neighbour that will stay in range.
+
+All protocols run with the same MAC, seeds and trajectories. A reactive control, which switches neighbour
+after a failed attempt, separates the gain from prediction from the gain from switching at all.
+
+## Results
+
+<img src="docs/media/results.png" alt="Packets delivered at 20 m/s: Greedy 84.0 %, reactive control 95.7 %, LEAP-GR 98.7 %." width="620">
+
+- Link breaks cost Greedy 4.1 % of its packets at 5 m/s and 16.0 % at 20 m/s.
+- LEAP-GR delivers more than Greedy in 9 of 11 configurations (paired, 95 % CI), by up to 14.7 points.
+- Prediction beats the reactive control by 0.9 to 3.0 points at high speed and density. It loses at 5 m/s
+  and when the network is saturated, and the [article](paper/) explains why.
+- 98.4 % of LEAP-GR's switches avoid a neighbour that, by its last hello, had already left range but was still
+  in Greedy's neighbour table. Most of the gain comes from not trusting stale neighbours.
+
+Unless stated otherwise: 30 UAVs, 1 packet/s per UAV, mean of 3 paired seeds. All figures are in
+[`figures/`](figures/).
+
+## How it works
+
+Hello messages carry each UAV's position, velocity and a timestamp. For each neighbour, a node computes the
+remaining link lifetime τ̂: the time until their distance exceeds 0.9 R_max (R_max = 249.3 m, derived from
+the simulator's radio parameters). Then, per packet and per hop:
+
+1. Take Greedy's choice, the neighbour closest to the destination.
+2. If its τ̂ ≥ τ_th (0.25 s), forward to it, exactly like Greedy.
+3. Otherwise forward to the neighbour with the most progress among those with τ̂ ≥ τ_th, or keep Greedy's
+   choice if there is none.
+
+The MAC is not modified. On an ACK timeout it calls the routing layer's `penalize` hook, which lets
+LEAP-GR redirect the remaining attempts. The protocol lives in [`routing/leap/`](routing/leap/).
 
 ## Quickstart
 
-Requires [uv](https://docs.astral.sh/uv/) (it installs Python 3.12 and the pinned dependencies).
+You need [uv](https://docs.astral.sh/uv/). It installs Python 3.12 and the pinned dependencies.
 
 ```bash
-git clone git@github.com:Jozziiff/leap-fanet-routing.git
+git clone https://github.com/Jozziiff/leap-fanet-routing.git
 cd leap-fanet-routing
 uv sync
 uv run python experiments/run_one.py --protocol leap --params '{"tau_th_s": 0.25}' \
     --n 10 --speed 20 --sim-time-s 10 --traffic-start-s 1 --traffic-end-s 9 --out quick.json
 ```
 
-This simulates 10 s of a 10-UAV swarm with LEAP-GR in about 1–2 minutes and writes `quick.json`: the
-configuration, the code version, the upstream metrics and our metrics (PDR, delay, loss causes,
-recomputations, LEAP events). Replace `leap` by any name in [`routing/registry.py`](routing/registry.py)
-(`greedy`, `grad`, `dsdv`, `opar`, `q_routing`, `qgeo`, `qfanet`).
+This simulates 10 s of a 10-UAV swarm in one or two minutes. `quick.json` holds the configuration, the code
+version and the metrics: delivery ratio, delay, loss causes, route recomputations, LEAP events. Swap `leap`
+for `greedy`, `grad`, `dsdv`, `opar`, `q_routing`, `qgeo` or `qfanet` to run another protocol.
+
+To run Greedy and LEAP-GR side by side on the same seed, as in the defense demo:
+
+```bash
+experiments/demo.sh
+```
+
+<details>
+<summary>What the demo prints</summary>
+<br>
+<img src="docs/media/demo-terminal.png" alt="Terminal output of experiments/demo.sh: 403 packets generated; Greedy delivers 329 (81.6 %) and loses 32 to link breaks; LEAP-GR delivers 360 (89.3 %), loses none to link breaks and makes 162 proactive switches." width="100%">
+<br>
+One seed, for illustration. The results above come from the full sweeps.
+</details>
 
 ## Reproducing the experiments
 
-Each experiment is a YAML file in [`experiments/configs/`](experiments/configs/). The sweep driver runs one
-fresh Python process per simulation (the simulator keeps global state), skips runs whose result file exists,
-and can split the work across machines with `--shard i/K`:
+Each experiment is a YAML file in [`experiments/configs/`](experiments/configs/). The sweep driver runs every
+simulation in a fresh Python process, skips runs whose result already exists, and can split the work across
+machines with `--shard i/K`. The same seed and code version give bit-identical results on different machines.
 
 ```bash
-uv run python experiments/sweep.py experiments/configs/exp_a_diagnostic.yaml --workers 4 --dry-run
-uv run python experiments/sweep.py experiments/configs/exp_a_diagnostic.yaml --workers 4 --shard 0/2
-```
-
-| Config | What it runs | Runs |
-|---|---|---|
-| `exp_a_diagnostic.yaml` | 7 existing protocols × 11 configurations × seeds 1–3 | 231 |
-| `exp_c_tuning.yaml`, `exp_c_shadow.yaml` | threshold tuning on separate seeds 100–102; prediction quality without acting on it | 18 + 5 |
-| `exp_b_reactive.yaml`, `exp_b_leap.yaml` | reactive control, LEAP-select, LEAP-GR × 11 configurations × seeds 1–3 | 99 |
-| `exp_d_crosslayer.yaml` | LEAP-GR with cross-layer weighting by the MAC retransmission rate | 15 |
-| `exp_e_leap_reactive.yaml` | exploratory: LEAP selection with reactive repair | 33 |
-
-A 30-s run takes roughly 35·N − 97 s of wall time for Greedy at 1 packet/s with several runs in parallel
-(GRAd about 3.5 times longer). Raw results go to `results/raw/` (not committed). Then:
-
-```bash
+uv run python experiments/sweep.py experiments/configs/exp_a_diagnostic.yaml --workers 4
 uv run python -m analysis.aggregate results/raw/exp_b_comparison --out results/exp_b.csv
 uv run python -m analysis.plots --exp-a results/exp_a.csv --exp-b results/exp_b.csv \
     --exp-c results/exp_c.csv --out figures
 ```
 
-The threshold is frozen from the tuning runs by a rule fixed before the sweep finished:
-[`experiments/freeze_tau.py`](experiments/freeze_tau.py).
+<details>
+<summary>All experiments</summary>
+<br>
 
-The same seed and code version reproduce a run bit for bit: runs computed on two different machines gave
-identical results.
+| Config | What it runs | Runs |
+|---|---|---|
+| `exp_a_diagnostic.yaml` | 7 existing protocols × 11 configurations × seeds 1-3 | 231 |
+| `exp_c_tuning.yaml`, `exp_c_shadow.yaml` | τ_th tuning on separate seeds 100-102; prediction quality without acting on it | 18 + 5 |
+| `exp_b_reactive.yaml`, `exp_b_leap.yaml` | reactive control, LEAP-select, LEAP-GR × 11 configurations × seeds 1-3 | 99 |
+| `exp_d_crosslayer.yaml` | LEAP-GR weighted by the MAC retransmission rate | 15 |
+| `exp_e_leap_reactive.yaml` | exploratory: LEAP selection with reactive repair | 33 |
 
-## How LEAP-GR works
-
-Hello messages carry each UAV's position, velocity and a timestamp. A node extrapolates each neighbour's
-position and computes the remaining link lifetime τ̂ as the time until the distance exceeds 0.9 R_max
-(R_max = 249.3 m, derived from the simulator's radio parameters): the larger root of
-‖Δp + Δv τ‖ = R. Then, per packet and per hop:
-
-1. take Greedy's choice (the neighbour closest to the destination);
-2. if its τ̂ is at least τ_th, forward to it, exactly like Greedy;
-3. otherwise forward to the neighbour with the most progress among those with τ̂ ≥ τ_th, or keep Greedy's
-   choice if there is none.
-
-On an ACK timeout, the MAC calls the routing layer's `penalize` hook; LEAP-GR can redirect the remaining
-attempts there without any change to the MAC. Details, equations and Algorithm 1 are in the
-[article](paper/).
-
-## Defense slides
-
-The slides of the oral are in [`slides/`](slides/): run `slides/serve.sh` and open http://127.0.0.1:8766/
-(P opens the presenter view). The demo slide plays a recording of [`experiments/demo.sh`](experiments/demo.sh),
-Greedy and LEAP-GR on the same seed; the next slide replays those two runs from their recorded events.
+τ_th is frozen from the tuning runs by a rule fixed before the sweep finished
+([`experiments/freeze_tau.py`](experiments/freeze_tau.py)). Raw results go to `results/raw/` and are not committed.
+</details>
 
 ## Repository layout
 
 | Path | Content |
 |---|---|
-| `routing/leap/` | LEAP-GR: link lifetime, hello packet, neighbour table, protocol |
-| `instrumentation/` | observe-only hooks and the recorder (loss attribution, recomputations) |
-| `experiments/` | single-run runner, sweep driver, configs, threshold freezing, animation, defense demo |
-| `slides/` | defense slides (HTML), recorded demo and its replay |
-| `analysis/` | aggregation, paired statistics, figures |
-| `tests/` | pytest suite (`uv run pytest`; the slow golden tests: `uv run pytest -m slow`) |
-| `docs/` | specification, decisions, lab notebook, verified facts about the simulator |
-| `paper/` | the article (LaTeX, IEEEtran) |
-| everything else | UavNetSim-v1 v1.0.1; our changes to it are listed in [`PATCHES.md`](PATCHES.md) |
+| [`routing/leap/`](routing/leap/) | LEAP-GR: link lifetime, hello packet, neighbour table, protocol |
+| [`instrumentation/`](instrumentation/) | observe-only hooks and the recorder behind the loss attribution |
+| [`experiments/`](experiments/) | single-run runner, sweep driver, configs, demo |
+| [`analysis/`](analysis/) | aggregation, paired statistics, figures |
+| [`tests/`](tests/) | pytest suite (`uv run pytest`, slow golden tests with `-m slow`) |
+| [`paper/`](paper/) | the article (LaTeX, IEEEtran) |
+| [`slides/`](slides/) | the defense slides in HTML, with the recorded demo and its replay |
+| [`docs/`](docs/) | specification, decision log, lab notebook, verified simulator facts |
+| everything else | UavNetSim-v1 v1.0.1, with our changes listed in [`PATCHES.md`](PATCHES.md) |
 
-Our modifications to the simulator are behaviour-neutral by default: with our features off, a golden test
-checks that the upstream metrics are bit-identical to the unmodified simulator.
+Our changes to the simulator do nothing unless switched on: a golden test checks that, with them off, the
+metrics are bit-identical to the unmodified simulator.
 
 ## Limitations
 
 Free-space channel without fading, Gauss–Markov mobility only, 30-s runs, three seeds per configuration,
-energy depletion disabled, destination positions known to the source (as for Greedy). OPAR on this platform
-uses the true positions of all UAVs, so it is a reference with global knowledge, not a distributed protocol.
+energy depletion disabled, and the destination's position is known to the source (as for Greedy). OPAR on
+this platform uses the true positions of all UAVs, so it serves as a reference with global knowledge.
 
-## Credits
+## Authors
 
-UavNetSim-v1 is by Zihao Zhou *et al.* ([paper](https://arxiv.org/abs/2507.09852),
-[repository](https://github.com/Zihao-Felix-Zhou/UavNetSim-v1), MIT license); its README is kept as
-[`README_UPSTREAM.md`](README_UPSTREAM.md). Supervision: Dr Mériem Afif, INSAT.
+Built by [Youssef Hamdani](https://github.com/Jozziiff) and Rayen Hamza as Projet 06 of the
+*Futurs Réseaux Mobiles* course (RT5, INSAT, 2026/2027), supervised by Dr Mériem Afif.
 
-Authors: Youssef Hamdani and Rayen Hamza.
+The simulator is [UavNetSim-v1](https://github.com/Zihao-Felix-Zhou/UavNetSim-v1) by Zihao Zhou *et al.*
+([paper](https://arxiv.org/abs/2507.09852), MIT license). Its original README is kept as
+[`README_UPSTREAM.md`](README_UPSTREAM.md).

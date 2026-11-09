@@ -20,3 +20,5 @@ results/raw/
 # Demo videos are release assets, not tracked (SPEC 18.1)
 figures/*.mp4
 figures/*.gif
+# README media recorded from the slides (small, kept in the repo)
+!docs/media/*.gif
