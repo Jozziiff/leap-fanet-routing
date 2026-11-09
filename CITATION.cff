@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "LEAP-GR: predicting link breaks in UAV swarms"
+abstract: >-
+  Loss attribution for seven FANET routing protocols on UavNetSim-v1, and LEAP-GR, a greedy geographic
+  routing protocol that switches next hop when the link to Greedy's choice is predicted to break.
+authors:
+  - given-names: Youssef
+    family-names: Hamdani
+  - given-names: Rayen
+    family-names: Hamza
+version: 1.0.0
+date-released: 2026-11-09
+license: MIT
+repository-code: "https://github.com/Jozziiff/leap-fanet-routing"
+keywords:
+  - FANET
+  - UAV swarm
+  - geographic routing
+  - link expiration time
+  - link-break prediction
+references:
+  - type: software
+    title: UavNetSim-v1
+    authors:
+      - given-names: Zihao
+        family-names: Zhou
+    version: v1.0.1
+    license: MIT
+    repository-code: "https://github.com/Zihao-Felix-Zhou/UavNetSim-v1"

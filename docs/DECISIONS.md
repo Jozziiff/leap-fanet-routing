@@ -336,3 +336,28 @@ Status values: **accepted** (in force), **superseded by D-xxx**, **revisit at <g
 - **Defence:** "We found the bug ourselves from the event logs (packets in flight at the end), traced it to a
   simulator behaviour we then documented, fixed it with a regression test and re-ran everything it touched."
 - **Status:** accepted.
+
+## D-019 — `tau_th_s` defaults to the frozen value
+- **Date / phase:** 2026-11-09, release. **Serves:** R6 (configurable threshold), reproducibility.
+- **Context:** `routing/leap/leap.py` kept `tau_th_s = 1.0` as its default, a placeholder from before tuning.
+  Every config and the demo pass 0.25 explicitly, but a reader who runs `--protocol leap` without parameters
+  would get a different protocol from the one in the article.
+- **Decision:** default `tau_th_s = 0.25`, the value frozen by D-016 (`docs/tau_freeze.json`).
+- **Rejected:** keeping 1.0 and documenting it (a trap for anyone reusing the module).
+- **Evidence:** no committed config relies on the default (`grep tau_th_s experiments/configs/*.yaml`: every
+  LEAP variant sets it), so no result changes.
+- **Defence:** "The default is the value we froze and report; every experiment also sets it explicitly."
+- **Status:** accepted.
+
+## D-020 — Release v1.0.0 contents
+- **Date / phase:** 2026-11-09, release. **Serves:** SPEC §18.1 (portfolio-grade repository), D-008.
+- **Decision:** tag `results-v1` at `165c2d1` (last commit that changed results; later commits to `figures/`
+  only re-wrote PDF timestamps) and `v1.0.0` at the defended version. The GitHub release attaches the article
+  PDF, the raw results (`results-raw.zip`, every run JSON and event log, including the superseded runs of
+  D-018) and the side-by-side demo video. Our code is MIT-licensed under both authors' names; the upstream
+  notice is kept in `LICENSE-UPSTREAM`.
+- **Deviation from SPEC §18.1:** the slides stay in HTML (`slides/`, run with `make slides`) instead of a PDF in
+  the release; the team chose not to maintain an export.
+- **Defence:** "Every number in the article can be rebuilt from the release's raw results with the commands in
+  `docs/reproducing.md`, and the tables come out identical."
+- **Status:** accepted.

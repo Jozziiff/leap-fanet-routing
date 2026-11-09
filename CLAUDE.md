@@ -48,10 +48,12 @@ Subject: *Routage prédictif basé sur la qualité de lien dans un essaim d'UAV*
 
 ## Current status (update when a phase changes)
 - Defense: **Mon 2026-11-09, 09:00** (10 min talk + 10 min Q&A).
-- Phases 0–2 done. Exp A complete (231 runs, final). LEAP-GR implemented on `feat/leap-next`; a self-selection bug (M40, D-018) was fixed on 2026-11-08 (`2327be4`), so every LEAP-based run is being redone: Exp C re-tuning, then Exp B, D, E. All LEAP numbers recorded before that fix are superseded.
-- Article draft in `paper/` (diagnosis section final; LEAP results pending the re-runs). Project README written.
-- Experiments run from frozen worktrees (D-013); development happens on `feat/leap-next`, which is merged into `main` once the results are final.
-- Where things are: decisions `docs/DECISIONS.md`, measurements `docs/LAB_NOTEBOOK.md`, simulator facts `docs/UPSTREAM_FACTS.md`, upstream changes `PATCHES.md`.
+- All phases done: Exp A–E final (after the self-selection fix, D-018), article complete in `paper/`, slides in
+  `slides/`, demo in `experiments/demo.sh`. Release v1.0.0 (tags `results-v1`, `v1.0.0`, D-020).
+- After the defense: 5 seeds for Exp B (D-009), optional bonuses B2/B3, README test on the other laptop.
+- One worktree (`main`); raw results in `results/raw/` (also `results-raw.zip` in the release).
+- Where things are: decisions `docs/DECISIONS.md`, measurements `docs/LAB_NOTEBOOK.md`, simulator facts
+  `docs/UPSTREAM_FACTS.md`, upstream changes `PATCHES.md`, how to reproduce `docs/reproducing.md`.
 
 ## Professional-repo standard (team goal: CV/LinkedIn-grade repo) — SPEC §18
 - Our code: type hints, NumPy docstrings with units, `ruff` clean, no dead/commented-out code, no stray prints/TODOs. **Never reformat upstream files.**

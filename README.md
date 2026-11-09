@@ -4,10 +4,15 @@
 Greedy geographic routing that changes next hop <i>before</i> the radio link fails.</p>
 
 <p align="center">
+  <a href="https://github.com/Jozziiff/leap-fanet-routing/actions/workflows/ci.yml"><img src="https://github.com/Jozziiff/leap-fanet-routing/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/python-3.12-1d5bd8?style=flat-square" alt="Python 3.12">
   <img src="https://img.shields.io/badge/simulator-UavNetSim%20v1.0.1-111111?style=flat-square" alt="UavNetSim v1.0.1">
-  <img src="https://img.shields.io/badge/tests-pytest-111111?style=flat-square" alt="tests: pytest">
-  <img src="https://img.shields.io/badge/lint-ruff-111111?style=flat-square" alt="lint: ruff">
+  <img src="https://img.shields.io/badge/license-MIT-111111?style=flat-square" alt="MIT license">
+</p>
+
+<p align="center">
+  <a href="https://github.com/Jozziiff/leap-fanet-routing/releases/tag/v1.0.0"><b>Paper (PDF)</b></a> · <a href="docs/methodology.md"><b>Methodology</b></a> ·
+  <a href="docs/reproducing.md"><b>Reproduce</b></a> · <a href="slides/"><b>Slides</b></a>
 </p>
 
 <p align="center">
@@ -41,7 +46,7 @@ after a failed attempt, separates the gain from prediction from the gain from sw
 - Link breaks cost Greedy 4.1 % of its packets at 5 m/s and 16.0 % at 20 m/s.
 - LEAP-GR delivers more than Greedy in 9 of 11 configurations (paired, 95 % CI), by up to 14.7 points.
 - Prediction beats the reactive control by 0.9 to 3.0 points at high speed and density. It loses at 5 m/s
-  and when the network is saturated, and the [article](paper/) explains why.
+  and when the network is saturated, and the [article](https://github.com/Jozziiff/leap-fanet-routing/releases/tag/v1.0.0) explains why.
 - 98.4 % of LEAP-GR's switches avoid a neighbour that, by its last hello, had already left range but was still
   in Greedy's neighbour table. Most of the gain comes from not trusting stale neighbours.
 
@@ -89,37 +94,21 @@ experiments/demo.sh
 <br>
 <img src="docs/media/demo-terminal.png" alt="Terminal output of experiments/demo.sh: 403 packets generated; Greedy delivers 329 (81.6 %) and loses 32 to link breaks; LEAP-GR delivers 360 (89.3 %), loses none to link breaks and makes 162 proactive switches." width="100%">
 <br>
-One seed, for illustration. The results above come from the full sweeps.
+One seed, for illustration. The results above come from the full sweeps. A side-by-side video of the
+two protocols is attached to the [release](https://github.com/Jozziiff/leap-fanet-routing/releases/tag/v1.0.0).
 </details>
 
 ## Reproducing the experiments
 
-Each experiment is a YAML file in [`experiments/configs/`](experiments/configs/). The sweep driver runs every
-simulation in a fresh Python process, skips runs whose result already exists, and can split the work across
-machines with `--shard i/K`. The same seed and code version give bit-identical results on different machines.
-
 ```bash
-uv run python experiments/sweep.py experiments/configs/exp_a_diagnostic.yaml --workers 4
-uv run python -m analysis.aggregate results/raw/exp_b_comparison --out results/exp_b.csv
-uv run python -m analysis.plots --exp-a results/exp_a.csv --exp-b results/exp_b.csv \
-    --exp-c results/exp_c.csv --out figures
+make test       # pytest, about 7 minutes
+make figures    # every figure and table from the committed results, in seconds
 ```
 
-<details>
-<summary>All experiments</summary>
-<br>
-
-| Config | What it runs | Runs |
-|---|---|---|
-| `exp_a_diagnostic.yaml` | 7 existing protocols × 11 configurations × seeds 1-3 | 231 |
-| `exp_c_tuning.yaml`, `exp_c_shadow.yaml` | τ_th tuning on separate seeds 100-102; prediction quality without acting on it | 18 + 5 |
-| `exp_b_reactive.yaml`, `exp_b_leap.yaml` | reactive control, LEAP-select, LEAP-GR × 11 configurations × seeds 1-3 | 99 |
-| `exp_d_crosslayer.yaml` | LEAP-GR weighted by the MAC retransmission rate | 15 |
-| `exp_e_leap_reactive.yaml` | exploratory: LEAP selection with reactive repair | 33 |
-
-τ_th is frozen from the tuning runs by a rule fixed before the sweep finished
-([`experiments/freeze_tau.py`](experiments/freeze_tau.py)). Raw results go to `results/raw/` and are not committed.
-</details>
+The raw results of all 401 runs (Exp A to E) are attached to the [release](https://github.com/Jozziiff/leap-fanet-routing/releases/tag/v1.0.0) as `results-raw.zip`.
+[`docs/reproducing.md`](docs/reproducing.md) has the commands to rebuild the tables from them, or to rerun
+the simulations: one YAML config per experiment, a resumable sweep driver that can split the work across
+machines, and bit-identical results for the same seed on any machine.
 
 ## Repository layout
 
@@ -132,7 +121,7 @@ uv run python -m analysis.plots --exp-a results/exp_a.csv --exp-b results/exp_b.
 | [`tests/`](tests/) | pytest suite (`uv run pytest`, slow golden tests with `-m slow`) |
 | [`paper/`](paper/) | the article (LaTeX, IEEEtran) |
 | [`slides/`](slides/) | the defense slides in HTML, with the recorded demo and its replay |
-| [`docs/`](docs/) | specification, decision log, lab notebook, verified simulator facts |
+| [`docs/`](docs/) | [architecture](docs/architecture.md), [methodology](docs/methodology.md), [reproduction](docs/reproducing.md), specification, decision log, lab notebook, verified simulator facts |
 | everything else | UavNetSim-v1 v1.0.1, with our changes listed in [`PATCHES.md`](PATCHES.md) |
 
 Our changes to the simulator do nothing unless switched on: a golden test checks that, with them off, the
@@ -151,4 +140,9 @@ Built by [Youssef Hamdani](https://github.com/Jozziiff) and Rayen Hamza as Proje
 
 The simulator is [UavNetSim-v1](https://github.com/Zihao-Felix-Zhou/UavNetSim-v1) by Zihao Zhou *et al.*
 ([paper](https://arxiv.org/abs/2507.09852), MIT license). Its original README is kept as
-[`README_UPSTREAM.md`](README_UPSTREAM.md).
+[`README_UPSTREAM.md`](README_UPSTREAM.md) and its license as [`LICENSE-UPSTREAM`](LICENSE-UPSTREAM).
+
+## Citation
+
+If this work helps yours, GitHub's "Cite this repository" button (from [`CITATION.cff`](CITATION.cff)) gives
+the reference. Our code is under the [MIT license](LICENSE).
