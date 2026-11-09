@@ -11,7 +11,7 @@ Greedy's code, inherited unchanged; the MAC is untouched.
 
 Parameters (``config.ROUTING_PARAMS``, all optional):
 
-``tau_th_s`` (default 1.0)
+``tau_th_s`` (default 0.25, the value frozen from the tuning runs, ``docs/tau_freeze.json``)
     Lifetime threshold (s). ``0`` disables the prediction-based switch.
 ``repair`` (default ``"predictive"``)
     ``"off"`` (variant LEAP-select), ``"predictive"`` (LEAP) or ``"reactive"`` (control variant: switch to
@@ -42,7 +42,7 @@ from simulator.log import logger
 from utils import config
 from utils.util_function import euclidean_distance_3d
 
-DEFAULTS = {"tau_th_s": 1.0, "repair": "predictive", "kappa": 0.9, "extra_hello_bits": 128}
+DEFAULTS = {"tau_th_s": 0.25, "repair": "predictive", "kappa": 0.9, "extra_hello_bits": 128}
 REPAIR_MODES = ("off", "predictive", "reactive")
 
 
