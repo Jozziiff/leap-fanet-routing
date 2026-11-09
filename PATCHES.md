@@ -13,6 +13,7 @@ Check the full diff at any time with `git diff <first-commit> -- <upstream paths
 |---|---|---|---|
 | N1 | Removed `.idea/` (6 files) and `routing/qmr/__pycache__/*.pyc` (12 files) shipped by the tag | IDE settings and stale bytecode do not belong in the repository (UPSTREAM_FACTS M33) | none (Python recompiles from source) |
 | N2 | Appended a project section to `.gitignore` | ignore the virtual environment, tool caches, local notes and raw results | none |
+| N3 | Renamed upstream `LICENSE` to `LICENSE-UPSTREAM` (content unchanged); `LICENSE` now holds the MIT license of our code | GitHub reads `LICENSE` for the repository's license; the upstream notice stays in the repository as MIT requires | none |
 
 ## Code patches (SPEC §4.3)
 
