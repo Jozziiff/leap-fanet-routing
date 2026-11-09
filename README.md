@@ -101,13 +101,20 @@ On an ACK timeout, the MAC calls the routing layer's `penalize` hook; LEAP-GR ca
 attempts there without any change to the MAC. Details, equations and Algorithm 1 are in the
 [article](paper/).
 
+## Defense slides
+
+The slides of the oral are in [`slides/`](slides/): run `slides/serve.sh` and open http://127.0.0.1:8766/
+(P opens the presenter view). The demo slide plays a recording of [`experiments/demo.sh`](experiments/demo.sh),
+Greedy and LEAP-GR on the same seed; the next slide replays those two runs from their recorded events.
+
 ## Repository layout
 
 | Path | Content |
 |---|---|
 | `routing/leap/` | LEAP-GR: link lifetime, hello packet, neighbour table, protocol |
 | `instrumentation/` | observe-only hooks and the recorder (loss attribution, recomputations) |
-| `experiments/` | single-run runner, sweep driver, configs, threshold freezing, animation |
+| `experiments/` | single-run runner, sweep driver, configs, threshold freezing, animation, defense demo |
+| `slides/` | defense slides (HTML), recorded demo and its replay |
 | `analysis/` | aggregation, paired statistics, figures |
 | `tests/` | pytest suite (`uv run pytest`; the slow golden tests: `uv run pytest -m slow`) |
 | `docs/` | specification, decisions, lab notebook, verified facts about the simulator |

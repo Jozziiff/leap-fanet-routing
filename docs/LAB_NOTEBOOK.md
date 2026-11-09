@@ -305,3 +305,19 @@ into `results/exp_b.csv` as label `leap_reactive`. Paired PDR differences (pp, 3
 Reading: adding the reactive rescue closes the 5 m/s gap (it was the missing rescue after an ACK timeout),
 but not the λ = 5 gap, which comes from longer paths in a saturated channel. Exploratory, chosen after seeing
 test results: reported as a post-hoc check, not as the main protocol.
+
+## 2026-11-09 01:40 — Defense demo run (one seed, oral only)
+Setup: `experiments/demo.sh` at commit `be8e83e`: N = 20, 20 m/s, λ = 2, seed 1, 15 s simulated (traffic
+2–12 s), Greedy and LEAP-GR with `tau_th_s = 0.25` (D-016). Recorded with asciinema in
+`slides/assets/demo.cast`; the same two runs are replayed on the next slide from `slides/assets/replay-data.js`
+(`experiments/replay_export.py`, which checks that its totals equal the recorded demo's).
+- Greedy: 403 generated, 329 delivered (81.6 %), 32 lost to link breaks, 0 to collisions, 42 to other causes.
+- LEAP-GR: 403 generated, 360 delivered (89.3 %), 0 lost to link breaks, 0 to collisions, 43 to other causes,
+  162 proactive switches.
+- In 30 cases Greedy drops a packet to a link break while LEAP-GR, at the same drone and for the same packet,
+  switches away from the same neighbour; the replay shows four of them, all with τ̂ = 0 (the neighbour had
+  already left by its last hello, as in the 98.4 % of Exp B).
+Slip caught by the fact-check: the first recording ran LEAP-GR with the code default `tau_th_s = 1.0`
+(`routing/leap/leap.py` DEFAULTS); `demo.sh` and the exporter now pass 0.25 explicitly. Greedy is unchanged;
+LEAP-GR went from 181 to 162 switches with the same delivery. One demo seed: never reported as a result.
+Where: slides 15–16 of the oral.
