@@ -135,7 +135,7 @@ this platform uses the true positions of all UAVs, so it serves as a reference w
 
 ## Authors
 
-Built by [Youssef Hamdani](https://github.com/Jozziiff) and Rayen Hamza as Projet 06 of the
+Built by [Youssef Hamdani](https://www.linkedin.com/in/youssef-hamdani2/) and [Rayen Hamza](https://www.linkedin.com/in/hamza-rayen-a2a6a2251/) as Projet 06 of the
 *Futurs Réseaux Mobiles* course (RT5, INSAT, 2026/2027), supervised by Dr Mériem Afif.
 
 The simulator is [UavNetSim-v1](https://github.com/Zihao-Felix-Zhou/UavNetSim-v1) by Zihao Zhou *et al.*
