@@ -1,0 +1,12 @@
+{"version": 2, "width": 96, "height": 26, "timestamp": 1794184689, "idle_time_limit": 1.5, "env": {"SHELL": "/bin/bash", "TERM": "xterm-256color"}, "title": "LEAP-GR demo"}
+[0.008437, "o", "\r\n\u001b[1;34m# The code we run: our commit, and our protocol module in routing/\u001b[0m\r\n"]
+[1.2116, "o", "\u001b[1m$ git --no-pager log -1 --format=%h  %s\u001b[0m\r\n"]
+[2.021461, "o", "be8e83e  docs(paper): cite the UavNetSim preprint and name the NRL metric\r\n"]
+[2.0224, "o", "\u001b[1m$ ls routing/leap/__init__.py routing/leap/leap_packet.py routing/leap/leap.py routing/leap/leap_table.py routing/leap/link_lifetime.py\u001b[0m\r\n"]
+[2.834363, "o", "routing/leap/__init__.py  routing/leap/leap_packet.py  routing/leap/link_lifetime.py\r\nrouting/leap/leap.py\t  routing/leap/leap_table.py\r\n"]
+[2.834765, "o", "\r\n\u001b[1;34m# Same swarm, same seed: 20 drones at 20 m/s, 15 s simulated, Greedy and LEAP-GR in parallel\u001b[0m\r\n"]
+[4.038299, "o", "\u001b[1m$ run_one.py --protocol greedy  &  run_one.py --protocol leap --params {\"tau_th_s\": 0.25}\u001b[0m\r\n"]
+[211.493876, "o", "done: /tmp/leap-demo/greedy.json  /tmp/leap-demo/leap.json\r\n\r\n"]
+[211.493905, "o", "\u001b[1;34m# What each run delivered, and why packets were lost\u001b[0m\r\n"]
+[212.697011, "o", "\u001b[1m$ .venv/bin/python experiments/demo_summary.py /tmp/leap-demo/greedy.json /tmp/leap-demo/leap.json\u001b[0m\r\n"]
+[213.52026, "o", "                                  Greedy     LEAP-GR\r\n----------------------------------------------------\r\npackets generated                    403         403\r\npackets delivered                    329         360\r\ndelivery ratio (PDR)              81.6 %      89.3 %\r\nlost to link breaks                   32           0\r\nlost to collisions                     0           0\r\nlost, other causes                    42          43\r\nstill in flight at the end             0           0\r\nproactive switches                     -         162\r\n----------------------------------------------------\r\ncommit be8e83e · same seed, same traffic and trajectories · one demo seed, not a result\r\n"]

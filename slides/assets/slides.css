@@ -1,0 +1,196 @@
+/* === PER-SLIDE LAYOUT (positions only; looks come from deck.css tokens) === */
+.black .deck-stage { opacity: 0; }
+::selection { background: var(--leap); color: #fff; }
+
+/* === PERSISTENT HEADER: logo + project name left, section navigation right ===
+   Lives above the slides (z-index), so it never re-animates when the slide changes. */
+.chrome { position: absolute; left: var(--m); right: var(--m); top: 34px; height: 76px; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between; }
+.brand { display: flex; align-items: center; gap: 18px; }
+.brand img { display: block; width: 72px; height: 71px; }
+.brand b { display: block; font: 800 25px/1.1 var(--display); letter-spacing: -0.015em; }
+.brand span { display: block; font: 500 19px/1.3 var(--display); color: var(--muted); margin-top: 3px; }
+
+.sections { position: relative; display: flex; align-items: center; gap: 4px; }
+.sections button { position: relative; z-index: 1; appearance: none; border: 0; background: none; cursor: pointer;
+  padding: 12px 14px; font: 500 21px/1 var(--display); color: var(--ink); letter-spacing: -0.005em; white-space: nowrap;
+  transition: font-size 0.55s var(--ease), color 0.35s var(--ease), padding 0.55s var(--ease); }
+.sections button:hover { color: var(--leap); }
+.sections button:focus-visible { outline: 3px solid var(--leap); outline-offset: 2px; }
+.sections button.on { font-size: 27px; font-weight: 800; color: #fff; padding: 14px 20px; }
+/* the sliding block behind the current section; engine.js moves it */
+.sections .slider { position: absolute; left: 0; top: 50%; height: 58px; margin-top: -29px; width: 0; background: var(--ink);
+  opacity: 0; transition: opacity 0.3s; }
+
+/* shared positions: headline top-left, step rows down the left column, scene on the right */
+.slide .head { left: var(--m); top: 190px; }
+.slide .steps { left: var(--m); top: 480px; width: 560px; }
+.slide .bignum { right: 60px; top: 170px; }
+.foot { font-size: 20px; }
+
+/* === 01 title === */
+.credits { position: absolute; left: var(--m); right: var(--m); top: 168px; display: grid; grid-template-columns: repeat(4, 1fr);
+  column-gap: 48px; z-index: 1; }
+.credits > div { border-top: 3px solid var(--ink); padding-top: 12px; font: 800 24px/1.2 var(--display); }
+.credits span { display: block; font: 500 17px/1.3 var(--display); color: var(--muted); margin-bottom: 6px; }
+.credits em { display: block; font: 400 21px/1.3 var(--display); font-style: normal; color: var(--ink); }
+.s-title .square { left: var(--m); top: 360px; }
+.s-title .title { position: absolute; left: var(--m); top: 600px; width: 1040px; font-size: 140px; }
+.s-title .lede { position: absolute; left: 1152px; top: 360px; width: 672px; }
+.s-title .swarmbox { position: absolute; left: 1152px; top: 520px; width: 672px; height: 391px; }
+.s-title canvas { width: 672px; height: 391px; }
+
+/* === 02 problem === */
+.s-problem svg.scene { left: 650px; top: 372px; width: 1240px; height: 600px; }
+
+/* === 03 questions === */
+.s-questions .qs { left: 672px; top: 210px; width: 1152px; }
+.s-questions .stack { left: var(--m); top: 530px; width: 480px; }
+.stack .label { margin-bottom: 14px; }
+.stack .layer { border: 3px solid var(--ink); border-bottom: 0; padding: 14px 18px; font: 800 26px/1.1 var(--display);
+  display: flex; justify-content: space-between; align-items: baseline; background: #fff; }
+.stack .layer:last-child { border-bottom: 3px solid var(--ink); }
+.stack .layer span { font: 400 18px/1 var(--display); color: var(--muted); }
+.stack .layer.route.in { background: var(--leap); color: #fff; border-color: var(--leap); }
+.stack .layer.route.in span { color: #fff; }
+
+/* === 04 existing routing: four columns on the grid === */
+.families { left: var(--m); right: var(--m); top: 480px; display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 48px; }
+.families > div { border-top: 3px solid var(--ink); padding-top: 16px; }
+.families h3 { margin: 0 0 6px; font: 800 48px/1 var(--display); letter-spacing: -0.03em; }
+.families .label { display: block; font-size: 20px; margin-bottom: 18px; }
+.families p { margin: 0 0 14px; font: 400 25px/1.35 var(--body); }
+.families p.when { color: var(--break); font-weight: 600; }
+.gap { left: var(--m); top: 880px; width: 1728px; margin: 0; font: 800 40px/1.2 var(--display); letter-spacing: -0.02em;
+  border-top: 3px solid var(--break); padding-top: 16px; }
+
+/* === 05 method === */
+.s-method .head { width: 1500px; }
+.rows b.inline { display: inline; font: 800 26px/1 var(--display); }
+
+/* === 06 finding, 10 result: scene on the left, two figures on the right === */
+.s-finding .head, .s-result .head { width: 1700px; }
+.facts { left: 1200px; top: 440px; width: 624px; }
+.facts > div { border-top: 3px solid var(--ink); padding-top: 18px; margin-bottom: 40px; }
+.facts .figure { font-size: 130px; }
+.facts .figure.mid { font-size: 88px; }
+.facts .lede { font-size: 28px; margin-top: 10px; }
+
+/* === 07 greedy === */
+.greedyfact { left: 780px; top: 800px; width: 1044px; display: flex; gap: 32px; align-items: baseline;
+  border-top: 3px solid var(--break); padding-top: 16px; }
+.figure-s { font: 800 96px/0.9 var(--display); letter-spacing: -0.04em; white-space: nowrap; }
+.greedyfact .lede { font-size: 30px; }
+
+/* === 08 leap === */
+.s-leap .head { width: 1700px; }
+.s-leap .steps { top: 440px; }
+.s-leap .rows p { margin-bottom: 18px; }
+.rows sub { font-size: 0.65em; }
+
+/* === 09 demo === */
+.s-demo .head { width: 400px; }
+
+/* === 11 why === */
+.why { left: var(--m); top: 220px; width: 1010px; }
+.why .figure { font-size: 300px; }
+.why .lede { font-size: 40px; margin-top: 24px; max-width: 900px; }
+
+/* === 12 limits === */
+.limits { left: 960px; top: 210px; width: 864px; }
+.limits p { font-size: 30px; margin-bottom: 30px; }
+.limits p b { font-size: 24px; }
+
+/* === 13 thank you: the biggest type of the deck, summary on the grid below === */
+.s-close .square { left: var(--m); top: 200px; }
+.thanks { position: absolute; left: var(--m); top: 300px; margin: 0; font: 800 300px/0.84 var(--display); letter-spacing: -0.055em; }
+.ask { position: absolute; left: 1152px; top: 560px; width: 672px; margin: 0; font: 400 40px/1.3 var(--body); }
+.summary { position: absolute; left: var(--m); right: var(--m); top: 850px; display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 48px; }
+.summary > div { border-top: 3px solid var(--ink); padding-top: 12px; font: 400 24px/1.35 var(--body); }
+.summary > div.good { border-color: var(--leap); }
+.summary span { display: block; font: 800 22px/1 var(--display); margin-bottom: 8px; }
+
+/* === existing-routing slides: protocol blocks ("Good at" / "Fails when") ===
+   Text left on columns 1-5, animation box right on columns 6-12. */
+.protos { left: var(--m); top: 450px; width: 660px; }
+.proto { border-top: 3px solid var(--ink); padding-top: 14px; margin-bottom: 30px; }
+.proto h3, .twoup h3 { margin: 0; font: 800 44px/1 var(--display); letter-spacing: -0.03em; }
+.proto > .label, .twoup .label { display: block; font-size: 19px; margin: 6px 0 12px; }
+.plus, .minus { margin: 0 0 10px; font: 400 24px/1.35 var(--body); }
+.plus span, .minus span { font: 800 19px/1 var(--display); margin-right: 10px; }
+.minus span { color: var(--break); }
+.protos.one .plus, .protos.one .minus { font-size: 27px; margin-bottom: 18px; }
+.twoup { left: var(--m); right: var(--m); top: 450px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 96px; }
+.twoup > div { border-top: 3px solid var(--ink); padding-top: 14px; }
+.scene.mini { position: relative; display: block; width: 100%; height: 220px; margin: 4px 0 16px; }
+
+/* === 15 demo: the terminal recording, framed on the grid === */
+.termframe { left: 528px; top: 180px; width: 1296px; height: 760px; border-top: 3px solid var(--ink); }
+.termbar { display: flex; justify-content: space-between; padding: 10px 0 12px; font: 500 19px/1 var(--display); }
+.termbar span:last-child { color: var(--muted); }
+.term { width: 1296px; height: 712px; }
+.term .ap-wrapper, .term .ap-player { background: #fff; }
+.asciinema-player-theme-swiss {
+  --term-color-foreground: #111111; --term-color-background: #ffffff;
+  --term-color-0: #111111; --term-color-1: #ff3300; --term-color-2: #1f7a3d; --term-color-3: #9a6400;
+  --term-color-4: #1d5bd8; --term-color-5: #7a3cc9; --term-color-6: #0f6f7c; --term-color-7: #6b6b6b;
+  --term-color-8: #6b6b6b; --term-color-9: #ff3300; --term-color-10: #1f7a3d; --term-color-11: #9a6400;
+  --term-color-12: #1d5bd8; --term-color-13: #7a3cc9; --term-color-14: #0f6f7c; --term-color-15: #111111;
+}
+
+/* === 16 replay: two synchronised panels of the recorded demo run === */
+.s-replay .head { top: 160px; width: 1700px; }
+.pcount { top: 236px; width: 580px; display: flex; justify-content: space-between; align-items: baseline;
+  border-top: 3px solid var(--ink); padding-top: 8px; font: 500 18px/1 var(--display); }
+.pcount.leap { border-color: var(--leap); }
+.pcount b { font: 800 26px/1 var(--display); }
+.pcount.leap b { color: var(--leap); }
+.pcount i { font-style: normal; font-weight: 800; font-variant-numeric: tabular-nums; }
+.pcount em { font-style: normal; color: var(--break); }
+.controls { left: 96px; top: 892px; width: 1200px; display: flex; align-items: center; gap: 14px; }
+.timeline { flex: 1; height: 82px; margin-top: -26px; cursor: pointer; }
+.timeline svg { display: block; width: 100%; height: 82px; overflow: visible; }
+.controls .time { font: 800 22px/1 var(--display); font-variant-numeric: tabular-nums; min-width: 130px; text-align: right; }
+.ui button { font: 500 18px/1 var(--display); color: var(--ink); background: #fff; border: 2px solid var(--ink); padding: 9px 13px; cursor: pointer; }
+.ui button:hover { color: var(--leap); border-color: var(--leap); }
+.ui button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.ui button:focus-visible { outline: 3px solid var(--leap); outline-offset: 2px; }
+.speeds { display: inline-flex; gap: 0; }
+.speeds button + button { border-left: 0; }
+.story { left: 1344px; top: 236px; width: 480px; height: 470px; border-top: 3px solid var(--ink); padding-top: 12px; overflow: hidden; }
+.story p { margin: 0 0 12px; font: 400 22px/1.35 var(--body); }
+.story .sub { font: 800 22px/1.2 var(--display); margin-bottom: 14px; }
+.story .col { margin-bottom: 14px; }
+.story .col b { display: block; font: 800 20px/1 var(--display); margin-bottom: 8px; }
+.story .col.leap b { color: var(--leap); }
+.story .col p { font-size: 19px; line-height: 1.3; margin-bottom: 7px; }
+.momentbar { left: 1344px; top: 724px; width: 480px; }
+.momentbar [data-ui="moments"] { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.momentbar .full { width: 100%; }
+.rl { stroke: #e2e2de; stroke-width: 1.5; }
+.rtx { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+.rtx.leap { stroke: var(--leap); }
+.rbrk line { stroke: var(--break); stroke-width: 5; stroke-linecap: round; }
+.rlost rect { fill: var(--break); }
+.rsw .avoid { stroke: var(--faint); stroke-width: 3; stroke-dasharray: 6 6; }
+.rsw .arrow line { stroke-width: 4; }
+.s-replay .drone .blade { animation: none; }
+.focus .rtx { opacity: 0.08 !important; }
+.focus .rl { opacity: 0.45; }
+.pcount span { display: flex; gap: 18px; align-items: baseline; }
+.pcount strong { font-weight: 500; color: var(--leap); }
+.story .keys { margin-top: 14px; border-top: 1px solid var(--hair); padding-top: 12px; }
+.story .keyrow { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; font: 400 19px/1.3 var(--body); }
+.story .keyrow svg { flex: none; }
+.story .col p { position: relative; padding-left: 34px; }
+.story .col p i { position: absolute; left: 0; top: 1px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: #fff; font: 800 14px/24px var(--display); text-align: center; font-style: normal; }
+.story .col.leap p i { background: var(--leap); }
+.story .col p.bad i { background: var(--break); }
+.story .col p.bad { color: var(--break); font-weight: 600; }
+.story .col p.good { color: var(--leap); font-weight: 600; }
+.story .note { font: 500 16px/1.2 var(--display); color: var(--muted); }
+.momentbar button i { font-style: normal; font-weight: 800; margin-right: 8px; }
+svg.scene.replay { overflow: hidden; }
+
+/* foot: a wide first column so long source lines never wrap */
+.foot { grid-template-columns: 2fr 1fr 0fr 1fr; }

@@ -1,0 +1,171 @@
+/* === LEAP-GR defense deck · Swiss Precision ===
+   One design system for every slide and every scene. Change a token here, never a value in a slide. */
+
+/* === TOKENS === */
+:root {
+  /* colour: white field, black ink, red only for link breaks, blue only for LEAP */
+  --stage-bg: #e9e9e6;
+  --slide-bg: #ffffff;
+  --ink: #111111;
+  --muted: #6b6b6b;
+  --faint: #b8b8b4;
+  --hair: rgba(17, 17, 17, 0.14);
+  --grid: rgba(17, 17, 17, 0.06);
+  --ghostnum: #f1f1ef;
+  --break: #ff3300;
+  --leap: #1d5bd8;
+  --greedy: #111111;
+  --reactive: #8a8a86;
+
+  /* type: Archivo for display and labels, Nunito for running text */
+  --display: 'Archivo', sans-serif;
+  --body: 'Nunito', sans-serif;
+  --t-hero: 150px;
+  --t-h2: 112px;
+  --t-h3: 64px;
+  --t-num: 220px;
+  --t-lede: 34px;
+  --t-body: 26px;
+  --t-label: 19px;
+
+  /* space: 96 px margins, 12 columns of 144 px */
+  --m: 96px;
+  --col: 144px;
+
+  /* motion */
+  --ease: cubic-bezier(0.7, 0, 0.2, 1);
+  --rise: 0.8s;
+  --stagger: 0.09s;
+}
+
+/* === STAGE === */
+.slide { color: var(--ink); font-family: var(--body); }
+.slide::before { /* the visible 12-column grid */
+  content: ''; position: absolute; inset: 0 var(--m); pointer-events: none;
+  background-image: linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: var(--col) 100%;
+  border-right: 1px solid var(--grid);
+}
+.notes { display: none; }
+
+/* === CHROME: top line and foot === */
+.top, .foot { position: absolute; left: var(--m); right: var(--m); display: grid; grid-template-columns: repeat(4, 1fr);
+  font: 500 var(--t-label)/1.3 var(--display); z-index: 2; }
+.top { top: 64px; }
+.foot { bottom: 56px; }
+.top span, .foot span { color: var(--muted); font-weight: 400; }
+.top > :last-child, .foot > :last-child { text-align: right; }
+.top b, .foot b { font-weight: 500; }
+
+/* === TYPE === */
+.title { font: 800 var(--t-hero)/0.9 var(--display); letter-spacing: -0.045em; margin: 0; }
+.h2 { font: 800 var(--t-h2)/0.92 var(--display); letter-spacing: -0.04em; margin: 0; }
+.h3 { font: 800 var(--t-h3)/0.95 var(--display); letter-spacing: -0.03em; margin: 0; }
+.lede { font: 400 var(--t-lede)/1.4 var(--body); margin: 0; }
+.label { font: 500 var(--t-label)/1.3 var(--display); color: var(--muted); }
+.red { color: var(--break); }
+.blue { color: var(--leap); }
+.bignum { position: absolute; font: 800 520px/0.8 var(--display); letter-spacing: -0.06em; color: var(--ghostnum); z-index: 0; }
+.square { position: absolute; width: 64px; height: 64px; background: var(--break); }
+.figure { font: 800 var(--t-num)/0.85 var(--display); letter-spacing: -0.05em; }
+.figure small { font-size: 0.4em; letter-spacing: -0.02em; }
+.abs { position: absolute; z-index: 1; }
+
+/* === COMPONENTS === */
+/* numbered rows with a heavy top rule (steps, questions, limits) */
+.rows p { margin: 0 0 22px; font: 400 var(--t-body)/1.35 var(--body); border-top: 3px solid var(--ink); padding-top: 12px; }
+.rows p b { font: 800 22px/1 var(--display); display: block; margin-bottom: 8px; }
+.rows p .label { display: block; margin-top: 6px; font-size: 20px; }
+.rows p.warn { border-color: var(--break); }
+.rows p.good { border-color: var(--leap); }
+.rows.big p { font-size: 36px; line-height: 1.25; padding-top: 16px; margin-bottom: 34px; }
+.rows.big p b { font-size: 26px; }
+
+/* a step-revealed element: dim until its step, then full ink */
+[data-reveal] { transition: opacity 0.45s var(--ease), transform 0.6s var(--ease); }
+.dim[data-reveal]:not(.in) { opacity: 0.18; }
+.hide[data-reveal]:not(.in) { opacity: 0; transform: translateY(18px); }
+
+
+/* === ENTRANCE MOTION: headline lines rise, the rest fades in === */
+.line { display: block; overflow: hidden; padding-bottom: 0.05em; }
+.line > span { display: inline-block; transform: translateY(105%); }
+.slide.active .line > span { animation: rise var(--rise) var(--ease) forwards; animation-delay: calc(var(--d, 0) * var(--stagger) + 0.1s); }
+@keyframes rise { to { transform: none; } }
+.fade { opacity: 0; }
+.slide.active .fade { animation: fade 0.6s ease forwards; animation-delay: calc(var(--d, 0) * var(--stagger) + 0.35s); }
+@keyframes fade { to { opacity: 1; } }
+.snap .slide *, .snap .slide *::before { animation-duration: 0s !important; animation-delay: 0s !important; transition: none !important; }
+
+/* === SCENE KIT (SVG) === */
+.scene { position: absolute; overflow: visible; z-index: 1; }
+.ring { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 2 10; stroke-linecap: round; }
+.ring.soft { stroke: var(--faint); }
+.link { stroke: var(--ink); stroke-width: 6; stroke-linecap: butt; }
+.link.leap { stroke: var(--leap); }
+.link.thin { stroke-width: 3; }
+.packet { fill: var(--leap); }
+.drone .arm { stroke: var(--ink); stroke-width: 4; }
+.drone .rotor { fill: #fff; stroke: var(--ink); stroke-width: 3; }
+.drone .blade line { stroke: var(--ink); stroke-width: 3; }
+.drone .blade { animation: spin 0.35s linear infinite; }
+.drone .body { fill: var(--ink); }
+.drone.sender .body { fill: var(--leap); }
+.drone.ghost { opacity: 0.35; }
+.drone.ghost .arm, .drone.ghost .rotor, .drone.ghost .blade line { stroke-dasharray: 4 5; }
+.drone.ghost .body { fill: none; stroke: var(--ink); stroke-width: 3; stroke-dasharray: 4 4; }
+.drone.ghost .blade { animation: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.tag { font: 500 var(--t-label) var(--display); fill: var(--muted); }
+.tag.ink { fill: var(--ink); }
+.tag.center { text-anchor: middle; }
+.tag.big { font: 800 28px var(--display); fill: var(--ink); }
+.tag.lost { fill: var(--break); font-weight: 800; font-size: 24px; }
+.tag.leap { fill: var(--leap); font-weight: 800; }
+.retry { fill: #fff; stroke: var(--ink); stroke-width: 3; }
+.box { fill: #fff; stroke: var(--ink); stroke-width: 3; }
+.box.leap { stroke: var(--leap); fill: var(--leap); }
+.box.soft { stroke: var(--faint); }
+
+@media (prefers-reduced-motion: reduce) {
+  .drone .blade { animation: none; }
+}
+
+/* === SCENE KIT: arrows, targets, waves, gauges, slots === */
+.arrow line { stroke: var(--ink); stroke-width: 5; }
+.arrow polygon { fill: var(--ink); }
+.arrow.leap line { stroke: var(--leap); } .arrow.leap polygon { fill: var(--leap); }
+.arrow.red line { stroke: var(--break); } .arrow.red polygon { fill: var(--break); }
+.arrow.soft line { stroke: var(--faint); stroke-dasharray: 8 8; } .arrow.soft polygon { fill: var(--faint); }
+.arrow.thin line { stroke-width: 3; }
+.target .outer { fill: #fff; stroke: var(--ink); stroke-width: 4; }
+.target .inner { fill: var(--ink); }
+.wave { fill: none; stroke: var(--ink); stroke-width: 3; }
+.wave.leap { stroke: var(--leap); }
+.wave.soft { stroke: var(--muted); stroke-dasharray: 4 6; }
+.gauge .track { fill: #fff; stroke: var(--ink); stroke-width: 2; }
+.gauge .fill { fill: var(--leap); }
+.gauge .fill.low { fill: var(--break); }
+.gauge .thr { stroke: var(--ink); stroke-width: 3; }
+.tag.end { text-anchor: end; }
+.tag.small { font-size: 16px; }
+.tag.col { fill: var(--muted); font-weight: 800; font-size: 24px; }
+.slot .box { fill: #fff; stroke: var(--ink); stroke-width: 3; }
+.slot .box.fail { fill: var(--break); stroke: var(--break); }
+.slot .box.col { fill: var(--muted); stroke: var(--muted); }
+.slot .box.ok { fill: var(--ink); }
+.slot .box.okleap { fill: var(--leap); stroke: var(--leap); }
+.edge { stroke: var(--ink); stroke-width: 3; }
+.edge.faint { stroke: var(--faint); stroke-width: 2; }
+.edge.dash { stroke-dasharray: 6 8; }
+.edge.red { stroke: var(--break); }
+.edge.leap { stroke: var(--leap); }
+.panel-rule { stroke: var(--hair); stroke-width: 2; }
+.chip rect { fill: #fff; stroke: var(--ink); stroke-width: 2.5; }
+.chip.leap rect { fill: var(--leap); stroke: var(--leap); }
+.chip.leap text { fill: #fff; }
+.chip.soft rect { stroke: var(--faint); }
+.node { fill: #fff; stroke: var(--ink); stroke-width: 3; }
+.flash { fill: none; stroke: var(--break); stroke-width: 3; }
+.tag.white, .tag.big.white { fill: #fff; }
+.tag.leap { fill: var(--leap); font-weight: 800; }

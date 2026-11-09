@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LEAP-GR · Predicting link breaks in UAV swarms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;800&family=JetBrains+Mono:wght@400;700&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/vendor/asciinema-player.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/deck.css">
+<link rel="stylesheet" href="assets/slides.css">
+<script src="assets/vendor/gsap.min.js"></script>
+<script src="assets/vendor/asciinema-player.min.js"></script>
+</head>
+<body>
+<div class="deck-viewport"><div class="deck-stage">
+
+<!-- === PERSISTENT HEADER: logo, project name, section navigation (above every slide) === -->
+<header class="chrome">
+  <div class="brand">
+    <img src="assets/insat.png" alt="INSAT, Institut National des Sciences Appliquées et de Technologie" width="72" height="71">
+    <div><b>Predictive routing in UAV swarms</b><span>Projet 06 · LEAP-GR</span></div>
+  </div>
+  <nav class="sections" aria-label="Sections">
+    <span class="slider" aria-hidden="true"></span>
+    <button data-section="problem">Problem</button>
+    <button data-section="existing">Existing routing</button>
+    <button data-section="diagnosis">Diagnosis</button>
+    <button data-section="leap">LEAP-GR</button>
+    <button data-section="demo">Demo</button>
+    <button data-section="results">Results</button>
+    <button data-section="conclusion">Conclusion</button>
+  </nav>
+</header>
+
+<!-- ============================== TITLE ============================== -->
+
+<!-- === 01 · TITLE === -->
+<section class="slide s-title" data-scene="swarm" data-time="20" data-name="Title">
+  <div class="credits fade" style="--d:0">
+    <div><span>Course</span>Futurs Réseaux Mobiles<em>RT5 · INSAT</em></div>
+    <div><span>Authors</span>Youssef Hamdani<em>Rayen Hamza</em></div>
+    <div><span>Supervisor</span>Dr Mériem Afif<em>INSAT</em></div>
+    <div><span>Research defense</span>Projet 06<em>2026–2027</em></div>
+  </div>
+  <div class="square fade" style="--d:1"></div>
+  <p class="lede fade" style="--d:3">Where swarm routing loses its packets, and a protocol that switches next hop before the link fails.</p>
+  <div class="swarmbox fade" style="--d:4"><canvas class="scene" width="722" height="420"></canvas></div>
+  <h1 class="title"><span class="line"><span style="--d:1">Predicting link</span></span><span class="line"><span style="--d:2"><span class="red">breaks</span> in UAV</span></span><span class="line"><span style="--d:3">swarms.</span></span></h1>
+  <div class="foot"><div>Youssef Hamdani · Rayen Hamza</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">Good morning. We are Youssef Hamdani and Rayen Hamza, and this is Projet 06: predictive routing in a UAV swarm. Our question is simple: when drones relay each other's packets, where are packets lost, and can we avoid it by predicting when a link will break?</aside>
+</section>
+
+<!-- ============================== 01 · PROBLEM ============================== -->
+
+<!-- === 02 · PROBLEM: WHAT MAKES A FANET DIFFERENT (A0) === -->
+<section data-scene="fanet" class="slide s-context" data-section="problem" data-steps="2" data-time="30" data-name="A network that never stops moving">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">A network that</span></span><span class="line"><span style="--d:2">never stops moving.</span></span></h2></div>
+  <div class="rows steps abs">
+    <p class="dim" data-reveal="0"><b>No infrastructure</b>No base station: every drone is also a router for the others.</p>
+    <p class="dim" data-reveal="1"><b>Fast 3-D motion</b>Neighbours change far faster than in a ground ad hoc network.</p>
+    <p class="dim warn" data-reveal="2"><b>Frequent breaks</b>Links appear and disappear all the time, while packets are in flight.</p>
+  </div>
+  <svg class="scene" viewBox="0 0 1044 470" style="left:780px; top:430px; width:1044px; height:470px"></svg>
+  <div class="foot"><div>Youssef Hamdani · Rayen Hamza</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">A flying ad hoc network, a FANET, is different from a ground network in three ways. [0] There is no infrastructure: each drone relays packets for the others. [1] The drones move fast, in three dimensions. [2] So links appear and disappear all the time, often while a packet is on its way.</aside>
+</section>
+
+<!-- === 03 · PROBLEM: THE LINK BREAK (A2) === -->
+<section class="slide s-problem" data-section="problem" data-scene="linkbreak" data-steps="2" data-time="35" data-name="Drones move, links break">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">Drones move.</span></span><span class="line"><span style="--d:2" class="red">Links break.</span></span></h2></div>
+  <div class="rows steps abs">
+    <p class="dim" data-reveal="0"><b>1</b>A forwards packets to B over one radio link.</p>
+    <p class="dim" data-reveal="1"><b>2</b>B drifts towards the edge of A's range.</p>
+    <p class="dim warn" data-reveal="2"><b>3</b>Out of range: the frame is lost, and the MAC keeps retrying a neighbour that has left.</p>
+  </div>
+  <svg class="scene" viewBox="0 0 1600 600"></svg>
+  <div class="foot"><div>Youssef Hamdani · Rayen Hamza</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">[1] Here is the basic event. A forwards packets to B. [2] B drifts towards the edge of A's range. [3] Now B is out of range: the frame is lost, and the MAC retries the same neighbour five times before giving up. Most protocols react only after this, so every break costs a burst of lost packets and a delay while the route is repaired.</aside>
+</section>
+
+<!-- === 04 · PROBLEM: THREE QUESTIONS === -->
+<section class="slide s-questions" data-section="problem" data-steps="2" data-time="25" data-name="Three questions">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">Three</span></span><span class="line"><span style="--d:2">questions.</span></span></h2></div>
+  <div class="rows big qs abs">
+    <p class="dim" data-reveal="0"><b>Q1</b>Where do today's swarm routing protocols lose their packets?<span class="label">DSDV, Greedy, GRAd, OPAR, Q-Routing, QGeo, Q-FANET on one testbed</span></p>
+    <p class="dim warn" data-reveal="1"><b>Q2</b>How much of that loss comes from <span class="red">broken links</span>?<span class="label">rather than from MAC collisions</span></p>
+    <p class="dim good" data-reveal="2"><b>Q3</b>Can a protocol that <span class="blue">predicts the break</span> avoid it?<span class="label">a new module in routing/, compared with Greedy and GRAd, same MAC</span></p>
+  </div>
+  <div class="stack abs fade" style="--d:4">
+    <div class="label">UavNetSim-v1 · Python / SimPy</div>
+    <div class="layer">Application<span>Poisson UDP traffic</span></div>
+    <div class="layer route" data-reveal="2">Routing<span>routing/leap/ · ours</span></div>
+    <div class="layer">MAC<span>CSMA/CA · identical in every run</span></div>
+    <div class="layer">PHY + channel</div>
+    <div class="layer">3-D mobility</div>
+  </div>
+  <div class="foot"><div>Youssef Hamdani · Rayen Hamza</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">The subject gives three objectives, which we turned into three questions. [Q1] Where do the existing protocols of the UavNetSim simulator lose packets? [Q2] How much of it is broken links rather than collisions? [Q3] Can a geographic protocol that predicts breaks avoid them, compared fairly, with the MAC untouched?</aside>
+</section>
+
+<!-- ============================== 02 · EXISTING ROUTING ============================== -->
+
+<!-- === 05 · EXISTING: TOPOLOGY-BASED (A7) === -->
+<section data-scene="topology" class="slide s-topo" data-section="existing" data-steps="1" data-time="30" data-name="Tables and gradients">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">Tables and</span></span><span class="line"><span style="--d:2">gradients.</span></span></h2></div>
+  <div class="protos abs">
+    <div class="proto dim" data-reveal="0"><h3>DSDV</h3><span class="label">topology · proactive</span>
+      <p class="plus"><span>Good at</span>Every route is ready before a packet needs it.</p>
+      <p class="minus"><span>Fails when</span>Tables refresh on a timer: between updates they describe where the drones were.</p></div>
+    <div class="proto dim" data-reveal="1"><h3>GRAd</h3><span class="label">topology · on demand · broadcast</span>
+      <p class="plus"><span>Good at</span>Any closer neighbour may relay, so no single link is critical.</p>
+      <p class="minus"><span>Fails when</span>No acknowledgements, so no retries: a lost frame stays lost.</p></div>
+  </div>
+  <svg class="scene" viewBox="0 0 960 470" style="left:864px; top:430px; width:960px; height:470px"></svg>
+  <div class="foot"><div>Youssef Hamdani · Rayen Hamza</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">The simulator ships with four families of protocols. First, topology-based. [0] DSDV keeps a route to every destination, refreshed by periodic updates, so a route is always ready; but between two updates the table describes where the drones were, not where they are. [1] GRAd forwards by broadcast: any neighbour closer to the destination can relay. That is robust, but there are no acknowledgements, so a lost frame is never retried.</aside>
+</section>
+
+<!-- === 06 · EXISTING: POSITION-BASED, GREEDY (A8) === -->
+<section data-scene="greedyHop" class="slide s-pos" data-section="existing" data-steps="1" data-time="30" data-name="Greedy forwarding">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">Greedy: local,</span></span><span class="line"><span style="--d:2">simple, blind.</span></span></h2></div>
+  <div class="protos one abs">
+    <div class="proto"><h3>Greedy</h3><span class="label">position-based · the base of our protocol</span>
+      <p class="plus dim" data-reveal="0"><span>Good at</span>Needs only its neighbours' positions, carried by hello messages.</p>
+      <p class="plus dim" data-reveal="0"><span>Good at</span>Decides per packet, at every hop: no route to build or repair.</p>
+      <p class="minus dim" data-reveal="1"><span>Fails when</span>It chooses by distance alone, never asking how long the link will last.</p></div>
+  </div>
+  <svg class="scene" viewBox="0 0 960 470" style="left:912px; top:440px; width:912px; height:446px"></svg>
+  <div class="foot"><div>Youssef Hamdani · Rayen Hamza</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">Second, position-based routing, with Greedy. [0] Each drone knows its neighbours' positions from their hello messages, and sends the packet to the neighbour closest to the destination. No routes, no tables to repair: a fresh decision at every hop. That is why we chose it as the base of our protocol. [1] Its weakness: it picks by distance only, and never asks how long that link will last.</aside>
+</section>
+
+<!-- === 07 · EXISTING: PREDICTION AND LEARNING (A9) === -->
+<section data-scene="oracle" class="slide s-oracle" data-section="existing" data-steps="1" data-time="35" data-name="Oracle and learning">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">Predict with an oracle,</span></span><span class="line"><span style="--d:2">or learn from losses.</span></span></h2></div>
+  <div class="twoup abs">
+    <div class="dim" data-reveal="0">
+      <h3>OPAR</h3><span class="label">prediction · centralised</span>
+      <svg class="scene mini" viewBox="0 0 816 220"></svg>
+      <p class="plus"><span>Good at</span>Plans paths around predicted link lifetimes.</p>
+      <p class="minus"><span>Fails when</span>It reads every drone's true position: an oracle no real drone has.</p>
+    </div>
+    <div class="dim" data-reveal="1">
+      <h3>Q-Routing · QGeo · Q-FANET</h3><span class="label">learning</span>
+      <svg class="scene mini" viewBox="0 0 816 220"></svg>
+      <p class="plus"><span>Good at</span>Learn which neighbours deliver, with no model of the radio.</p>
+      <p class="minus"><span>Fails when</span>They learn from outcomes: a packet must be lost before they adapt.</p>
+    </div>
+  </div>
+  <div class="foot"><div>Youssef Hamdani · Rayen Hamza</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">Third and fourth, prediction and learning. [0] OPAR does predict link lifetimes and plans around them. But in the simulator it is centralised: the source reads the true position of every drone. It is a useful upper reference, not something a real drone could run. [1] The Q-learning protocols learn which neighbours deliver. They need no model, but they learn from outcomes: packets have to be lost before they adapt.</aside>
+</section>
+
+<!-- === 08 · EXISTING: THE BLIND SPOT === -->
+<section class="slide s-existing" data-section="existing" data-steps="4" data-time="25" data-name="One blind spot">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">Seven protocols,</span></span><span class="line"><span style="--d:2">one blind spot.</span></span></h2></div>
+  <div class="families abs">
+    <div class="dim" data-reveal="0"><h3>Topology</h3><span class="label">DSDV · GRAd</span><p class="when">Routes lag behind the drones.</p></div>
+    <div class="dim" data-reveal="1"><h3>Position</h3><span class="label">Greedy</span><p class="when">Ignores how long a link will last.</p></div>
+    <div class="dim" data-reveal="2"><h3>Prediction</h3><span class="label">OPAR</span><p class="when">Needs an oracle.</p></div>
+    <div class="dim" data-reveal="3"><h3>Learning</h3><span class="label">Q-Routing · QGeo · Q-FANET</span><p class="when">Adapts after the loss.</p></div>
+  </div>
+  <p class="gap abs hide" data-reveal="4">None predicts a break from what a drone actually knows: its neighbours' hellos.</p>
+  <div class="foot"><div>Youssef Hamdani · Rayen Hamza</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">So, in one line each: [0] topology routes lag behind; [1] Greedy ignores link lifetime; [2] OPAR needs an oracle; [3] learning adapts after the loss. [4] The blind spot: predicting a break with only what a drone really receives, its neighbours' hello messages. But first, we had to measure whether breaks really matter.</aside>
+</section>
+
+<!-- ============================== 03 · DIAGNOSIS ============================== -->
+
+<!-- === 09 · DIAGNOSIS: CLASSIFY EVERY LOST FRAME (A3a) === -->
+<section data-scene="classify" class="slide s-method" data-section="diagnosis" data-steps="2" data-time="30" data-name="Every lost frame, classified">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">Every lost frame,</span></span><span class="line"><span style="--d:2">classified.</span></span></h2></div>
+  <div class="rows steps abs">
+    <p class="dim" data-reveal="0"><b>1</b>We log every transmission attempt with the real distance between the two drones.</p>
+    <p class="dim" data-reveal="1"><b>2</b>Receiver in range, frame lost: <b class="inline">collision</b>.</p>
+    <p class="dim warn" data-reveal="2"><b>3</b>Receiver out of range: <b class="inline red">link break</b>.</p>
+  </div>
+  <svg class="scene" viewBox="0 0 1044 470" style="left:780px; top:430px; width:1044px; height:470px"></svg>
+  <div class="foot"><div>7 protocols · 11 configurations · 3 seeds</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">We instrumented the simulator without changing its behaviour. [1] Every transmission attempt is logged with the true distance between the two drones. [2] Receiver in range but frame lost: something interfered, a collision. [3] Receiver out of range: a link break. The simulator's radio has a hard range, so this split is exact.</aside>
+</section>
+
+<!-- === 10 · DIAGNOSIS: WHAT WE FOUND (A3b) === -->
+<section data-scene="attempts" class="slide s-finding" data-section="diagnosis" data-steps="2" data-time="35" data-name="What we found">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">Collisions are absorbed.</span></span><span class="line"><span style="--d:2" class="red">Link breaks are not.</span></span></h2></div>
+  <svg class="scene" viewBox="0 0 1010 440" style="left:96px; top:450px; width:1010px; height:440px"></svg>
+  <div class="facts abs">
+    <div class="hide" data-reveal="1"><div class="figure red">99–100<small>%</small></div><p class="lede">of the losses that are link breaks or collisions are link breaks, for every unicast protocol</p></div>
+    <div class="hide" data-reveal="2"><div class="figure">≤ 0.09<small>%</small></div><p class="lede">of generated packets end as collisions at the reference point, unicast protocols</p></div>
+  </div>
+  <div class="foot"><div>7 protocols · 11 configurations · 3 seeds</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">[0] What we understood: a collision is temporary, the MAC retries and the next attempt usually gets through. A link break is permanent: every retry goes to a drone that is gone. [1] So for every unicast protocol, 99 to 100 percent of the losses that are link breaks or collisions are link breaks. [2] Collisions are nearly fully absorbed: at our reference point, at most 0.09 percent of packets. The problem is mobility, not the MAC.</aside>
+</section>
+
+<!-- === 11 · DIAGNOSIS: WHY GREEDY FAILS (A4) === -->
+<section data-scene="greedyEdge" class="slide s-greedy" data-section="diagnosis" data-steps="3" data-time="35" data-name="Why Greedy fails">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">Greedy picks</span></span><span class="line"><span style="--d:2">the edge.</span></span></h2></div>
+  <div class="rows steps abs">
+    <p class="dim" data-reveal="1"><b>1</b>Greedy forwards to the neighbour closest to the destination, which sits near the edge of range.</p>
+    <p class="dim" data-reveal="2"><b>2</b>That neighbour flies away. Its table entry lives 2 s, so Greedy still sees it.</p>
+    <p class="dim warn" data-reveal="3"><b>3</b>Five attempts go to a neighbour that has already left.</p>
+  </div>
+  <svg class="scene" viewBox="0 0 1044 420" style="left:780px; top:330px; width:1044px; height:420px"></svg>
+  <div class="greedyfact abs hide" data-reveal="3"><span class="figure-s red">9.8 %</span><span class="lede">of Greedy's packets are lost to link breaks at 10 m/s, and 16.0 % at 20 m/s.</span></div>
+  <div class="foot"><div>Greedy · N = 30 · λ = 1 pkt/s per drone · 3 seeds</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">Why does Greedy suffer most? [1] The neighbour closest to the destination is usually the farthest from us, at the edge of range. [2] That is exactly the one most likely to leave, and the table keeps it for two seconds after its last hello. [3] So all five attempts go to a drone that already left: about one packet in ten at 10 metres per second, one in six at 20.</aside>
+</section>
+
+<!-- ============================== 04 · LEAP-GR ============================== -->
+
+<!-- === 12 · LEAP-GR: LINK LIFETIME (A10) === -->
+<section data-scene="lifetime" class="slide s-let" data-section="leap" data-steps="2" data-time="40" data-name="Link lifetime">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">How long will</span></span><span class="line"><span style="--d:2" class="blue">this link last?</span></span></h2></div>
+  <div class="rows steps abs">
+    <p class="dim" data-reveal="0"><b>1</b>Each hello now carries the drone's velocity, next to its position.</p>
+    <p class="dim" data-reveal="1"><b>2</b>The receiver extrapolates where that neighbour is now.</p>
+    <p class="dim good" data-reveal="2"><b>3</b>Distance, relative speed and radio range give the time until they separate: the lifetime τ̂.</p>
+  </div>
+  <svg class="scene" viewBox="0 0 1044 470" style="left:780px; top:430px; width:1044px; height:470px"></svg>
+  <div class="foot"><div>The 3-D link expiration time · +128 bits per hello</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">Our protocol is called LEAP-GR, link-expiration-aware predictive greedy routing. Its core is one estimate. [0] Each hello already carries the drone's position; we add its velocity. [1] When a drone receives it, it extrapolates where the neighbour is now. [2] From the distance, the relative velocity and the radio range, a closed formula gives the time until the two drones separate: the link lifetime, tau hat. We use 90 percent of the range as a safety margin.</aside>
+</section>
+
+<!-- === 13 · LEAP-GR: THE RULE (A5) === -->
+<section data-scene="rule" class="slide s-leap" data-section="leap" data-steps="3" data-time="40" data-name="The rule">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">Greedy, unless the link</span></span><span class="line"><span style="--d:2" class="blue">is about to break.</span></span></h2></div>
+  <div class="rows steps abs">
+    <p class="dim" data-reveal="0"><b>1</b>Take Greedy's choice.</p>
+    <p class="dim" data-reveal="1"><b>2</b>Its link will last? Keep it.</p>
+    <p class="dim good" data-reveal="2"><b>3</b>About to break (τ̂ &lt; τ<sub>th</sub>)? Switch to the best neighbour whose link will last.</p>
+    <p class="dim" data-reveal="3"><b>4</b>No such neighbour? Keep Greedy's choice: never worse than Greedy.</p>
+  </div>
+  <svg class="scene" viewBox="0 0 1044 470" style="left:780px; top:430px; width:1044px; height:470px"></svg>
+  <div class="foot"><div>τ<sub>th</sub> = 0.25 s, chosen on separate seeds by a rule fixed in advance</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">Then the rule, which fits in one sentence: behave like Greedy, unless the link is about to break. [0] Start from Greedy's choice. [1] If its link will last, keep it. [2] If its lifetime is under the threshold, switch to the best neighbour that still makes progress and whose link will last. [3] If there is none, keep Greedy's choice: by construction, it is never worse than Greedy. The threshold, a quarter of a second, was chosen on separate seeds before the final tests.</aside>
+</section>
+
+<!-- === 14 · LEAP-GR: REPAIR WITHOUT TOUCHING THE MAC (A11) === -->
+<section data-scene="repair" class="slide s-repair" data-section="leap" data-steps="2" data-time="30" data-name="The MAC stays the same">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">The MAC stays</span></span><span class="line"><span style="--d:2">the same.</span></span></h2></div>
+  <div class="rows steps abs">
+    <p class="dim" data-reveal="0"><b>1</b>On a missing ACK, the MAC asks the routing layer through the platform's penalize hook.</p>
+    <p class="dim good" data-reveal="1"><b>2</b>LEAP-GR redirects the retries only if the current hop is predicted to break.</p>
+    <p class="dim" data-reveal="2"><b>3</b>A reactive control redirects after every failure: it tells us what prediction adds.</p>
+  </div>
+  <svg class="scene" viewBox="0 0 1044 470" style="left:780px; top:430px; width:1044px; height:470px"></svg>
+  <div class="foot"><div>A new module in routing/ · next_hop_selection, packet_reception, penalize</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">One constraint from the subject: the MAC must be identical in every comparison. [0] So we repair through a hook the platform already has: when an ACK is missing, the MAC calls the routing layer. [1] LEAP-GR uses it to redirect the retries, only if the current hop is predicted to break. [2] We also built a control that redirects after every failure, without prediction. Comparing the two isolates what prediction itself adds.</aside>
+</section>
+
+<!-- ============================== 05 · DEMO ============================== -->
+
+<!-- === 15 · DEMO === -->
+<section data-scene="demo" class="slide s-demo" data-section="demo" data-time="30" data-name="Demo">
+  <div class="head abs"><h2 class="h3"><span class="line"><span style="--d:1">The code,</span></span><span class="line"><span style="--d:2">running.</span></span></h2></div>
+  <div class="termframe abs"><div class="termbar"><span>experiments/demo.sh</span><span>recorded with asciinema · committed code</span></div><div class="term"></div></div>
+  <div class="foot"><div>Recorded run · committed code</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">Here is the code running. First the commit and our module in routing/. Then the same swarm and the same seed, run with Greedy and with LEAP-GR side by side. At the end, each run's delivery and why packets were lost: LEAP-GR's link-break losses drop because it switched before those links broke. This is one short demo seed; the results come from three paired seeds.</aside>
+</section>
+
+<!-- === 16 · DEMO: THE SAME RUN, REPLAYED (real recorded events) === -->
+<section data-scene="replay" class="slide s-replay" data-section="demo" data-steps="2" data-time="45" data-name="The demo run, replayed">
+  <div class="head abs"><h2 class="h3"><span class="line"><span style="--d:1">Same seed. Same drones. <span class="blue">One decision.</span></span></span></h2></div>
+  <div class="pcount abs" data-ui="count" style="left:96px"><b>Greedy</b><span>delivered <i data-c="dl">0</i><em>lost to link breaks <i data-c="lb">0</i></em></span></div>
+  <div class="pcount abs leap" data-ui="count" style="left:716px"><b>LEAP-GR</b><span>delivered <i data-c="dl">0</i><em>lost to link breaks <i data-c="lb">0</i></em><strong>switches <i data-c="sw">0</i></strong></span></div>
+  <svg class="scene replay" viewBox="0 0 600 600" style="left:96px; top:280px; width:580px; height:580px"></svg>
+  <svg class="scene replay" viewBox="0 0 600 600" style="left:716px; top:280px; width:580px; height:580px"></svg>
+  <div class="controls abs ui">
+    <button data-ui="play">Pause</button>
+    <span class="speeds"><button data-speed="0.25" class="on">0.25×</button><button data-speed="0.5">0.5×</button><button data-speed="1">1×</button></span>
+    <div class="timeline" data-ui="timeline" title="red: packets Greedy lost to link breaks · blue: LEAP-GR switches · click to jump"></div>
+    <span class="time" data-ui="time">t = 2.00 s</span>
+  </div>
+  <div class="story abs" data-ui="story"></div>
+  <div class="momentbar abs ui"><div data-ui="moments"></div><button data-ui="full" class="full">Back to the full run</button></div>
+  <div class="foot"><div>Recorded demo run, seed 1</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">This is the run you just saw in the terminal, replayed from its recorded events. Left Greedy, right LEAP-GR: same drones, same trajectories, same traffic, so the grey links are identical; only the routing decision differs. Faint strokes are packets being forwarded. When Greedy keeps sending to a neighbour that has already left, the link snaps in red; after five attempts the packet is marked lost. On the right, a blue arrow is LEAP-GR switching to a safe neighbour, the dashed line is the one it avoided. [1] The timeline below says when: every red tick is a packet Greedy lost to a link break, 32 in this run; LEAP-GR has none, and every blue tick is one of its switches. [2] Let's follow one real packet. Greedy sends it to a neighbour that is already out of range, five times, and loses it. At the same drone, LEAP-GR sees that neighbour's lifetime at zero, switches, and the packet is delivered. The numbered chips replay other moments if you want to see more.</aside>
+</section>
+
+<!-- ============================== 06 · RESULTS ============================== -->
+
+<!-- === 16 · RESULTS: FAIR TEST (A6) === -->
+<section data-scene="bars" class="slide s-result" data-section="results" data-steps="2" data-time="50" data-name="Result">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">Same MAC. Same seeds.</span></span><span class="line"><span style="--d:2">One change.</span></span></h2></div>
+  <svg class="scene" viewBox="0 0 1010 440" style="left:96px; top:450px; width:1010px; height:440px"></svg>
+  <div class="facts abs">
+    <div class="hide" data-reveal="1"><div class="figure blue">+14.7<small>pts</small></div><p class="lede">delivery vs Greedy at 20 m/s; significantly better in 9 of 11 configurations</p></div>
+    <div class="hide" data-reveal="2"><div class="figure mid">+0.9 to +3.0<small>pts</small></div><p class="lede">vs reacting, where breaks are frequent: fast or dense swarms</p></div>
+  </div>
+  <div class="foot"><div>Same traffic and trajectories · 3 paired seeds</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">Every protocol sees the same traffic and the same trajectories, so the comparison is paired. [0] Three bars at 20 metres per second: Greedy, the reactive control, and LEAP-GR. [1] Against Greedy, the gain is large, about 15 points, and LEAP-GR is significantly better in 9 of our 11 configurations. [2] Against reacting, the gain is smaller but real exactly where breaks are frequent: fast or dense swarms. Predicting beats reacting where links break most.</aside>
+</section>
+
+<!-- === 17 · RESULTS: WHY IT WORKS === -->
+<section data-scene="reprise" class="slide s-why" data-section="results" data-time="25" data-name="Why it works">
+  <div class="why abs"><div class="figure blue"><span class="line"><span style="--d:1">98.4<small>%</small></span></span></div><p class="lede fade" style="--d:3">of LEAP's switches skip a neighbour that, extrapolated from its own last hello, has already left.</p></div>
+  <svg class="scene" viewBox="0 0 624 640" style="left:1200px; top:200px; width:624px; height:640px"></svg>
+  <div class="foot"><div>From the event logs of the comparison runs</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">What we learned from the event logs: almost every switch skips a neighbour that, by its own last hello, has already left. So the gain is not long-range fortune-telling. It is refusing to trust a stale table entry, exactly Greedy's failure from before.</aside>
+</section>
+
+<!-- ============================== 07 · CONCLUSION ============================== -->
+
+<!-- === 18 · CONCLUSION: LIMITS AND BONUS === -->
+<section class="slide s-limits" data-section="conclusion" data-steps="1" data-time="30" data-name="Limits and bonus">
+  <div class="head abs"><h2 class="h2"><span class="line"><span style="--d:1">Where it stops</span></span><span class="line"><span style="--d:2">helping.</span></span></h2></div>
+  <div class="rows limits abs">
+    <p class="warn"><b>Heavy load</b>When the channel saturates, packets die in queues, not on broken links: reacting does better.</p>
+    <p class="warn"><b>Slow swarm</b>When drones move slowly, breaks are rare and there is little to predict.</p>
+    <p><b>Scope</b>Simulation only, open 3-D space, 3 seeds per point.</p>
+    <p class="dim good" data-reveal="1"><b>Bonus</b>Cross-layer weighting by MAC retries: fewer ACK timeouts under heavy load, same delivery.</p>
+  </div>
+  <div class="foot"><div>Youssef Hamdani · Rayen Hamza</div><div></div><div></div><div data-page></div></div>
+  <aside class="notes">It has limits, and they make sense. Under heavy load packets die in queues, not on broken links, so prediction cannot help and reacting does better. In a slow swarm breaks are rare. And this is simulation only, with three seeds per point. [1] As a bonus, we weighted the choice by the MAC retry rate: it reduces ACK timeouts under heavy load, but delivery does not change.</aside>
+</section>
+
+<!-- === 19 · THANK YOU === -->
+<section class="slide s-close" data-section="conclusion" data-time="10" data-name="Thank you">
+  <div class="square fade" style="--d:0"></div>
+  <h2 class="thanks"><span class="line"><span style="--d:1">Thank</span></span><span class="line"><span style="--d:2">you.</span></span></h2>
+  <p class="ask fade" style="--d:5">We are happy to take your questions.</p>
+  <div class="summary fade" style="--d:6">
+    <div><span>Diagnosis</span>Link breaks, not collisions, are where swarm routing loses packets.</div>
+    <div class="good"><span>LEAP-GR</span>Greedy, plus a link lifetime from hellos: switch before the break.</div>
+    <div><span>Code and article</span>github.com/Jozziiff/leap-fanet-routing</div>
+  </div>
+  <div class="foot"><div>Youssef Hamdani · Rayen Hamza</div><div><span>Supervisor: Dr Mériem Afif</span></div><div></div><div data-page></div></div>
+  <aside class="notes">To sum up: in a swarm, packets are lost to broken links, not collisions; and a lifetime computed from hello messages lets Greedy switch before the break. Thank you, we are happy to take your questions.</aside>
+</section>
+
+</div></div>
+<script src="assets/kit.js"></script>
+<script src="assets/scenes.js"></script>
+<script src="assets/scenes-diagnosis.js"></script>
+<script src="assets/scenes-leap.js"></script>
+<script src="assets/scenes-context.js"></script>
+<script src="assets/scenes-results.js"></script>
+<script src="assets/scenes-demo.js"></script>
+<script src="assets/replay-data.js"></script>
+<script src="assets/scenes-replay.js"></script>
+<script src="assets/engine.js"></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LEAP-GR · Presenter</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;800&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  /* Presenter view: current slide, next press, notes, timer. It follows the deck window over a
+     BroadcastChannel and sends it the keys pressed here. */
+  :root { --ink: #111; --muted: #6b6b6b; --hair: #ddd; --red: #ff3300; --blue: #1d5bd8; }
+  html, body { margin: 0; height: 100%; background: #f4f4f2; color: var(--ink); font-family: 'Nunito', sans-serif; }
+  main { display: grid; grid-template-columns: 1.55fr 1fr; grid-template-rows: auto 1fr; gap: 20px; padding: 20px; height: 100%; box-sizing: border-box; }
+  .bar { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 32px; font: 500 18px 'Archivo', sans-serif; }
+  .bar .clock { font: 800 56px/1 'Archivo', sans-serif; letter-spacing: -0.03em; }
+  .bar .clock.over { color: var(--red); }
+  .bar .muted { color: var(--muted); }
+  .bar button { margin-left: auto; font: 500 16px 'Archivo', sans-serif; padding: 8px 14px; border: 2px solid var(--ink); background: #fff; cursor: pointer; }
+  .frame { position: relative; background: #fff; border: 1px solid var(--hair); }
+  .frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+  .frame .cap { position: absolute; top: -1px; left: -1px; background: var(--ink); color: #fff; font: 500 14px 'Archivo', sans-serif; padding: 5px 9px; z-index: 1; }
+  .left { display: grid; grid-template-rows: auto 1fr; gap: 16px; min-height: 0; }
+  .cur { aspect-ratio: 16 / 9; }
+  .right { display: grid; grid-template-rows: auto 1fr; gap: 16px; min-height: 0; }
+  .nxt { aspect-ratio: 16 / 9; }
+  .notes { background: #fff; border: 1px solid var(--hair); padding: 22px 26px; font-size: 24px; line-height: 1.45; overflow: auto; }
+  .notes h3 { margin: 0 0 12px; font: 800 26px 'Archivo', sans-serif; }
+  .notes h3 span { color: var(--muted); font-weight: 500; font-size: 18px; margin-left: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="bar">
+    <span class="clock" id="clock">00:00</span>
+    <span class="muted">of 10:00</span>
+    <span id="pos">waiting for the deck…</span>
+    <span class="muted" id="plan"></span>
+    <button id="reset">Reset timer</button>
+  </div>
+  <div class="left">
+    <div class="frame cur"><span class="cap">Now</span><iframe id="cur" title="current slide" src="index.html?mirror"></iframe></div>
+    <div class="notes" id="notes"></div>
+  </div>
+  <div class="right">
+    <div class="frame nxt"><span class="cap">Next press</span><iframe id="nxt" title="next press" src="index.html?mirror&amp;ahead=1"></iframe></div>
+    <div class="notes" id="upcoming"></div>
+  </div>
+</main>
+<script>
+  const ch = new BroadcastChannel('leap-deck');
+  const $ = (id) => document.getElementById(id);
+  let t0 = null;
+  let state = null;
+
+  function slidesOf(frame) {
+    try { return [...frame.contentDocument.querySelectorAll('.slide')]; } catch (e) { return []; }
+  }
+
+  function render() {
+    if (!state) return;
+    const slides = slidesOf($('cur'));
+    const s = slides[state.slide];
+    if (!s) return;
+    const steps = Number(s.dataset.steps || 0);
+    $('pos').textContent = `Slide ${state.slide + 1} / ${state.total} · step ${state.step} / ${steps}`;
+    const before = slides.slice(0, state.slide + 1).reduce((a, x) => a + Number(x.dataset.time || 0), 0);
+    $('plan').textContent = `planned end of this slide ${fmt(before)}`;
+    $('notes').innerHTML = `<h3>${s.dataset.name || ''}<span>${s.dataset.time || '?'} s</span></h3>` + (s.querySelector('.notes')?.innerHTML || '');
+    const n = slides[state.slide + 1];
+    $('upcoming').innerHTML = n ? `<h3>Then: ${n.dataset.name || ''}<span>${n.dataset.time || '?'} s</span></h3>` : '<h3>Last slide</h3>';
+  }
+
+  const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  setInterval(() => {
+    const s = t0 ? (Date.now() - t0) / 1000 : 0;
+    $('clock').textContent = fmt(s);
+    $('clock').classList.toggle('over', s > 600);
+  }, 250);
+
+  ch.onmessage = (e) => {
+    if (!('slide' in (e.data || {}))) return;
+    if (t0 === null && (e.data.slide > 0 || e.data.step > 0)) t0 = Date.now();
+    state = e.data;
+    render();
+  };
+  $('cur').addEventListener('load', () => { ch.postMessage({ hello: true }); render(); });
+  $('reset').onclick = () => { t0 = null; };
+
+  addEventListener('keydown', (e) => {
+    const map = { ArrowRight: 'next', ' ': 'next', PageDown: 'next', Enter: 'next', ArrowLeft: 'back', PageUp: 'back', Home: 'first', End: 'last', b: 'black' };
+    if (map[e.key]) { e.preventDefault(); ch.postMessage({ cmd: map[e.key] }); }
+  });
+</script>
+</body>
+</html>
